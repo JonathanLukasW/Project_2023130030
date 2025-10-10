@@ -35,8 +35,13 @@
             <div class="card-body">
 
                 <div class="d-flex">
-                    <a href="" class="btn btn-primary mb-3 ms-auto">New Task</a>
+                    <a href="{{ route('tasks.create')}}" class="btn btn-primary mb-3 ms-auto">New Task</a>
                 </div>
+
+                @if(session('success'))
+                    <div class="alert alert-success">{{ session('success') }}</div>
+                @endif
+
                 <table class="table table-striped" id="table1">
                     <thead>
                         <tr>
@@ -63,16 +68,16 @@
                                 @endif
                             </td>
                             <td>
-                                <a href"" class="btn btn-info btn-sm">View</a>
+                                <a href="{{ route('tasks.show', $task->id) }}" class="btn btn-info btn-sm">View</a>
 
                                 @if($task->status == 'pending')
-                                    <a href"" class="btn btn-success btn-sm">Mark as Done</a>
+                                    <a href="" class="btn btn-success btn-sm">Mark as Done</a>
                                 @else
-                                    <a href"" class="btn btn-warning btn-sm">Mark as Pending</a>
+                                    <a href="" class="btn btn-warning btn-sm">Mark as Pending</a>
                                 @endif
 
-                                <a href"" class="btn btn-warning btn-sm">Edit</a>
-                                <a href"" class="btn btn-danger btn-sm">Hapus</a>
+                                <a href="{{ route('tasks.edit', $task->id) }}" class="btn btn-warning btn-sm">Edit</a>
+                                <a href="" class="btn btn-danger btn-sm">Hapus</a>
                             </td>
                         </tr>
 

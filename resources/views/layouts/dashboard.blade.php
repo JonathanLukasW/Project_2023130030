@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="{{ asset('template/dist/assets/compiled/css/iconly.css') }}">
     <link rel="stylesheet" href="{{ asset('template/dist/assets/extensions/simple-datatables/style.css') }}">
     <link rel="stylesheet" href="{{ asset('template/dist/assets/extensions/table-datatables.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 </head>
 
 <body>
@@ -74,7 +75,7 @@
                             </a>
                         </li>
                         <li class="sidebar-item">
-                            <a href="index.html" class='sidebar-link'>
+                            <a href="{{ url('/employees') }}" class='sidebar-link'>
                                 <i class="bi bi-people-fill"></i>
                                 <span>Employees</span>
                             </a>
@@ -103,13 +104,21 @@
                                 <span>Salaries</span>
                             </a>
                         </li>
-                        <li class="sidebar-item">
+                        <li class="sidebar-item has-sub">
                             <a href="index.html" class='sidebar-link'>
                                 <i class="bi bi-shift-fill"></i>
                                 <span>Leave Requests</span>
                             </a>
+                            <ul class="submenu ">
+
+                                <li class="submenu-item  ">
+                                    <a href="extra-component-avatar.html" class="submenu-link">Coba-coba</a>
+
+                                </li>
+                            </ul>
                         </li>
-                        <li class="sidebar-item">
+                        <li
+                            <li class="sidebar-item">
                             <a href="index.html" class='sidebar-link'>
                                 <i class="bi bi-box-arrow-right"></i>
                                 <span>Logout</span>
@@ -149,6 +158,14 @@
 
     <script src="{{ asset('template/dist/assets/extensions/simple-datatables/umd/simple-datatables.js') }}"></script>
     <script src="{{ asset('template/dist/assets/static/js/pages/simple-datatables.js') }}"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+        let dateTime = flatpickr('.datetime', {
+            dateFormat: "Y-m-d",
+        });
+    </script>
+
 </body>
 
 </html>
