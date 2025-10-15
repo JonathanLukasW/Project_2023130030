@@ -47,13 +47,11 @@
                         <tr>
                             <th>Fullname</th>
                             <th>Email</th>
-                            <th>Address</th>
-                            <th>birth_date</th>
-                            <th>hire_date</th>
                             <th>department_id</th>
                             <th>role_id</th>
                             <th>status</th>
                             <th>salary</th>
+                            <th>option</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -61,19 +59,27 @@
                         <tr>
                             <td>{{ $employee->fullname }}</td>
                             <td>{{ $employee->email}}</td>
-                            <td>{{ $employee->address }}</td>
-                            <td>{{ $employee->birth_date }}</td>
-                            <td>{{ $employee->hire_date }}</td>
-                            <td>{{ $employee->department_id }}</td>
-                            <td>{{ $employee->role_id }}</td>
+                            <td>{{ $employee->department->name }}</td>
+                            <td>{{ $employee->role->title}}</td>
                             <td>
                                 @if($employee->status == 'active')
-                                    <span class="text-warning">Pending</span>
+                                    <span class="text-warning">{{ ucfirst($employee->status) }}</span>
                                 @else
-                                    <span class="text-warning">{{ $employee->status }}</span>
+                                    <span class="text-warning">{{ ucfirst($employee->status) }}</span>
                                 @endif
                             </td>
-                            <td>{{ $employee->salary }}</td>
+                            <td>{{ number_format($employee->salary) }}</td>
+
+                            <td>
+
+                                <a href="{{ route('employees.show', $employee->id) }}" target="_blank" class="btn btn-info btn-sm" rel="noopener noreferrer">view</a>
+                                <a href="{{ route('employees.edit', $employee->id) }}" class="btn btn-warning btn-sm">edit</a>
+                                <form action="{{ route('employees.destroy', $employee->id) }}" method="POST" class="d-inline">
+                                    @csrf 
+                                    @method('DELETE')
+                                    <button class="btn btn-danger btn-sm" onclick="return confirm('Sure?')">Delete</button>
+                                </form>
+                            </td>
                             
                         </tr>
 
