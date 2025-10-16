@@ -117,8 +117,7 @@
                                 </li>
                             </ul>
                         </li>
-                        <li
-                            <li class="sidebar-item">
+                        <li class="sidebar-item">
                             <a href="index.html" class='sidebar-link'>
                                 <i class="bi bi-box-arrow-right"></i>
                                 <span>Logout</span>
@@ -161,8 +160,13 @@
 
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script>
-        let dateTime = flatpickr('.datetime', {
+        let date = flatpickr('.date', {
             dateFormat: "Y-m-d",
+        });
+
+        let datetime = flatpickr('.datetime', {
+            dateFormat: "Y-m-d H:i:s",
+            enableTime: true,
         });
     </script>
 

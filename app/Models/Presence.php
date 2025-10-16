@@ -10,5 +10,9 @@ class Presence extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['check_in', 'check_out', 'date', 'status'];
+    protected $fillable = ['employee_id','check_in', 'check_out', 'date', 'status'];
+
+    public function employee (){
+        return $this->belongsTo(Employee::class);
+    }
 }
