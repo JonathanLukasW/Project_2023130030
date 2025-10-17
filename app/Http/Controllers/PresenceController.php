@@ -74,4 +74,10 @@ class PresenceController extends Controller
 
         return redirect()->route('presences.index')->with('success', 'Presence updated successfully.');
     }
+
+    public function destroy(Presence $presence){
+        $presence->delete();
+
+        return redirect()->route('presences.index')->with('success', 'Presence deleted successfully.');
+    }
 }

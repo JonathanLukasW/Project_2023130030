@@ -21,6 +21,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard/presence', [DashboardController::class, 'presence']);
 
     Route::resource('/tasks', TaskController::class)->middleware(['role:HR,Developer']);
+    Route::get('/tasks/done/{id}', [TaskController::class, 'done'])->name('tasks.done')->middleware(['role:HR,Developer']);
+    Route::get('/tasks/pending/{id}', [TaskController::class, 'pending'])->name('tasks.pending')->middleware(['role:HR,Developer']);
 
     Route::resource('/employees', EmployeeController::class)->middleware(['role:HR']);
 

@@ -33,7 +33,7 @@
                 </h5>
             </div>
             <div class="card-body">
-                
+
                 <div class="d-flex">
                     @if(session('role') == 'HR')
                     <a href="{{ route('tasks.create')}}" class="btn btn-primary mb-3 ms-auto">New Task</a>
@@ -41,7 +41,7 @@
                 </div>
 
                 @if(session('success'))
-                    <div class="alert alert-success">{{ session('success') }}</div>
+                <div class="alert alert-success">{{ session('success') }}</div>
                 @endif
 
                 <table class="table table-striped" id="table1">
@@ -62,25 +62,29 @@
                             <td>{{ $task->due_date }}</td>
                             <td>
                                 @if($task->status == 'pending')
-                                    <span class="text-warning">Pending</span>
+                                <span class="text-warning">Pending</span>
                                 @elseif($task->status == 'done')
-                                    <span class="text-success">Done</span>
+                                <span class="text-success">Done</span>
                                 @else
-                                    <span class="text-info">{{ $task->status }}</span>
+                                <span class="text-info">{{ $task->status }}</span>
                                 @endif
                             </td>
                             <td>
                                 <a href="{{ route('tasks.show', $task->id) }}" class="btn btn-info btn-sm">View</a>
 
                                 @if($task->status == 'pending')
-                                    <a href="" class="btn btn-success btn-sm">Mark as Done</a>
+                                <a href="{{ route('tasks.done', $task->id) }}" class="btn btn-success btn-sm">Mark as Done</a>
                                 @else
-                                    <a href="" class="btn btn-warning btn-sm">Mark as Pending</a>
+                                <a href="{{ route('tasks.pending', $task->id) }}" class="btn btn-warning btn-sm">Mark as Pending</a>
                                 @endif
 
-                                @if(session('role') == 'HR')    
+                                @if(session('role') == 'HR')
                                 <a href="{{ route('tasks.edit', $task->id) }}" class="btn btn-warning btn-sm">Edit</a>
-                                <a href="" class="btn btn-danger btn-sm">Hapus</a>
+                                <form action="{{ route('tasks.destroy', $task->id) }}" method="POST" style="display:inline;">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this task?')">Delete</button>
+                                </form>
                                 @endif
                             </td>
                         </tr>

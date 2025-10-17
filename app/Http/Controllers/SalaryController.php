@@ -72,4 +72,10 @@ class SalaryController extends Controller
     public function show(Salary $salary){
         return view('salaries.show', compact('salary'));
     }
+
+    public function destroy(Salary $salary){
+        $salary->delete();
+
+        return redirect()->route('salaries.index')->with('success', 'Salary record deleted successfully.');
+    }   
 }
