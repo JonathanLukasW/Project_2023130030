@@ -24,7 +24,7 @@
                 <div class="sidebar-header position-relative">
                     <div class="d-flex justify-content-between align-items-center">
                         <div class="logo">
-                            <a href="index.html"><img src="{{ asset('template/dist/assets/compiled/svg/logo.svg') }}" alt="Logo" srcset=""></a>
+                            <a href="{{ url('/') }}"><img src="{{ asset('template/dist/assets/compiled/svg/logo.svg') }}" alt="Logo" srcset=""></a>
                         </div>
                         <div class="theme-toggle d-flex gap-2  align-items-center mt-2">
                             <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true"
@@ -62,63 +62,95 @@
                 <div class="sidebar-menu">
                     <ul class="menu">
                         <li class="sidebar-title">Menu</li>
-                        <li class="sidebar-item active ">
+
+                        @if (session('role') == 'HR')
+                        <li class="sidebar-item {{ request()->is('dashboard') ? 'active' : '' }}">
                             <a href="{{ url('/dashboard') }}" class='sidebar-link'>
                                 <i class="bi bi-grid-fill"></i>
                                 <span>Dashboard</span>
                             </a>
                         </li>
-                        <li class="sidebar-item">
+                        <li class="sidebar-item {{ request()->is('tasks') ? 'active' : '' }}">
                             <a href="{{ url('/tasks') }}" class='sidebar-link'>
                                 <i class="bi bi-check-circle-fill"></i>
                                 <span>Tasks</span>
                             </a>
                         </li>
-                        <li class="sidebar-item">
+                        <li class="sidebar-item {{ request()->is('employees') ? 'active' : '' }}">
                             <a href="{{ url('/employees') }}" class='sidebar-link'>
                                 <i class="bi bi-people-fill"></i>
                                 <span>Employees</span>
                             </a>
                         </li>
-                        <li class="sidebar-item">
-                            <a href="index.html" class='sidebar-link'>
+                        <li class="sidebar-item {{ request()->is('departments') ? 'active' : '' }}">
+                            <a href="{{ url('/departments') }}" class='sidebar-link'>
                                 <i class="bi bi-briefcase"></i>
                                 <span>Departments</span>
                             </a>
                         </li>
-                        <li class="sidebar-item">
-                            <a href="index.html" class='sidebar-link'>
+                        <li class="sidebar-item {{ request()->is('roles') ? 'active' : '' }}">
+                            <a href="{{ url('/roles') }}" class='sidebar-link'>
                                 <i class="bi bi-tag"></i>
                                 <span>Roles</span>
                             </a>
                         </li>
-                        <li class="sidebar-item">
-                            <a href="index.html" class='sidebar-link'>
+                        <li class="sidebar-item {{ request()->is('presences') ? 'active' : '' }}">
+                            <a href="{{ url('/presences') }}" class='sidebar-link'>
                                 <i class="bi bi-table"></i>
                                 <span>Presences</span>
                             </a>
                         </li>
-                        <li class="sidebar-item">
-                            <a href="index.html" class='sidebar-link'>
+                        <li class="sidebar-item {{ request()->is('salaries') ? 'active' : '' }}">
+                            <a href="{{ url('/salaries') }}" class='sidebar-link'>
                                 <i class="bi bi-currency-dollar"></i>
                                 <span>Salaries</span>
                             </a>
                         </li>
-                        <li class="sidebar-item has-sub">
-                            <a href="index.html" class='sidebar-link'>
+                        <li class="sidebar-item {{ request()->is('leave-requests') ? 'active' : '' }}">
+                            <a href="{{ url('/leave-requests') }}" class='sidebar-link'>
                                 <i class="bi bi-shift-fill"></i>
                                 <span>Leave Requests</span>
                             </a>
-                            <ul class="submenu ">
-
-                                <li class="submenu-item  ">
-                                    <a href="extra-component-avatar.html" class="submenu-link">Coba-coba</a>
-
-                                </li>
-                            </ul>
                         </li>
+
+                        @endif
+
+                        @if (in_array(session('role'), ['Developer','Sales']))
+
+                        <li class="sidebar-item {{ request()->is('dashboard') ? 'active' : '' }}" >
+                            <a href="{{ url('/dashboard') }}" class='sidebar-link'>
+                                <i class="bi bi-grid-fill"></i>
+                                <span>Dashboard</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item {{ request()->is('tasks') ? 'active' : '' }}" >
+                            <a href="{{ url('/tasks') }}" class='sidebar-link'>
+                                <i class="bi bi-check-circle-fill"></i>
+                                <span>Tasks</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item {{ request()->is('presences') ? 'active' : '' }}">
+                            <a href="{{ url('/presences') }}" class='sidebar-link'>
+                                <i class="bi bi-table"></i>
+                                <span>Presences</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item {{ request()->is('salaries') ? 'active' : '' }}">
+                            <a href="{{ url('/salaries') }}" class='sidebar-link'>
+                                <i class="bi bi-currency-dollar"></i>
+                                <span>Salaries</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item {{ request()->is('leave-requests') ? 'active' : '' }}">
+                            <a href="{{ url('/leave-requests') }}" class='sidebar-link'>
+                                <i class="bi bi-shift-fill"></i>
+                                <span>Leave Requests</span>
+                            </a>
+                        </li>
+                        @endif
+
                         <li class="sidebar-item">
-                            <a href="index.html" class='sidebar-link'>
+                            <a href="{{ url('/logout') }}" class='sidebar-link'>
                                 <i class="bi bi-box-arrow-right"></i>
                                 <span>Logout</span>
                             </a>

@@ -34,6 +34,8 @@
             </div>
             <div class="card-body">
 
+                @if(session('role') == "HR")
+
                 <form action="{{ route('presences.store')}}" method="POST">
                     @csrf
 
@@ -90,9 +92,71 @@
                     <a href="{{ route('presences.index') }}" class="btn btn-secondary">Back</a>
 
                 </form>
+
+                @else
+                <form action="{{ route('presences.store') }}" method="POST">
+                    @csrf
+
+                    <div class="mb-3"><b>Note</b> : Mohon izinkan akses lokasi, supaya presensi diterima</div>
+
+                    <div class="mb-3">
+                        <label for="" class="form-label">Latitude</label>
+                        <input type="text" class="form-control " name="latitude" id="latitude" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="" class="form-label">Longitude</label>
+                        <input type="text" class="form-control " name="longitude" id="longitude" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <iframe width="500" height="300" src="" frameborder="0" scrolling="no" marginheight="0" marginwidth="0"></iframe>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" id="btn-present" disabled>Presence</button>
+                </form>
+                @endif
             </div>
         </div>
 
     </section>
 </div>
+
+<script>
+    const iframe = document.querySelector('iframe');
+
+    const officeLat = -6.895505;
+    const officeLong = 107.613252;
+    const threshold = 0.001;
+
+    navigator.geolocation.getCurrentPosition(function(position) {
+        const lat = position.coords.latitude;
+        const long = position.coords.longitude;
+        iframe.src = `https://maps.google.com/maps?q=${lat},${long}&output=embed`;
+
+    });
+
+    document.addEventListener('DOMContentLoaded', (event) => {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(function(position) {
+                        const lat = position.coords.latitude;
+                        const long = position.coords.longitude;
+
+                        document.getElementById('latitude').value = lat;
+                        document.getElementById('longitude').value = long;
+
+                        const distance = Math.sqrt(Math.pow(lat - officeLat, 2) + Math.pow(long - officeLong, 2));
+
+                        if (distance <= threshold) {
+                            console.log('Kamu berada di Kantor, ayo bekerja');
+                            document.getElementById('btn-present').removeAttribute('disabled');
+                        } else {
+                            alert('Kamu tidak berada di kantor, tolong absen di kantor');
+                        }
+                    });
+                } else {
+                    console.log('Geolocation is not supported by this browser.');
+                }
+            });
+</script>
 @endsection

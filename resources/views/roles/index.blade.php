@@ -39,7 +39,7 @@
                 </div>
 
                 @if(session('success'))
-                    <div class="alert alert-success">{{ session('success') }}</div>
+                <div class="alert alert-success">{{ session('success') }}</div>
                 @endif
 
                 <table class="table table-striped" id="table1">
@@ -61,6 +61,7 @@
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                </form>
                             </td>
                         </tr>
 

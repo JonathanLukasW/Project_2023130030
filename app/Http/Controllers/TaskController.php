@@ -10,20 +10,27 @@ class TaskController extends Controller
 {
     public function index()
     {
-        $tasks = Task::all();
+
+        if (session('role') == 'HR') {
+            $tasks = Task::all();
+        } else {
+            $tasks = Task::where('assigned_to', session('employee_id'))->get();
+        }
 
         return view('tasks.index', compact('tasks'));
     }
 
-    public function create(){
+    public function create()
+    {
 
         $employees = Employee::all();
 
         return view('tasks.create', compact('employees'));
     }
 
-    public function store(Request $request){
-        
+    public function store(Request $request)
+    {
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -33,17 +40,19 @@ class TaskController extends Controller
         ]);
 
         Task::create($validated);
-        return redirect()->route('tasks.index')->with('success', 'Task created succesfully'); 
+        return redirect()->route('tasks.index')->with('success', 'Task created succesfully');
     }
 
-    public function edit(Task $task){
+    public function edit(Task $task)
+    {
         $employees = Employee::all();
 
         return view('tasks.edit', compact('task', 'employees'));
     }
 
-    public function update(Request $request, task $task){
-        
+    public function update(Request $request, task $task)
+    {
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -53,11 +62,11 @@ class TaskController extends Controller
         ]);
 
         $task->update($validated);
-        return redirect()->route('tasks.index')->with('success', 'Task updated succesfully'); 
+        return redirect()->route('tasks.index')->with('success', 'Task updated succesfully');
     }
 
-    public function show(Task $task) {
+    public function show(Task $task)
+    {
         return view('tasks.show', compact('task'));
-
     }
 }

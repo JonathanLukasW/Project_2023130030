@@ -10,7 +10,11 @@ class SalaryController extends Controller
 {
     public function index()
     {
-        $salaries = Salary::all();
+        if(session('role') == 'HR'){
+            $salaries = Salary::all();
+        } else {
+            $salaries = Salary::where('employee_id', session('employee_id'))->get();
+        }
 
         return view('salaries.index', compact('salaries'));
     }

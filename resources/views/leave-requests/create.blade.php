@@ -46,19 +46,21 @@
 
                 <form action="{{ route('leave-requests.store')}}" method="POST">
                     @csrf
-
-                    <div class="mb-3">
-                        <label for="" class="form-label">Employee</label>
-                        <select name="employee_id" class="form-control @error('employee_id') is-invalid @enderror">
-                            <option value="">Select an Employee</option>
-                            @foreach($employees as $employee)
-                            <option value="{{ $employee->id }}">{{ $employee->fullname }}</option>
-                            @endforeach
-                        </select>
-                        @error('employee_id')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
+                    
+                    @if (session('role') == 'HR')
+                        <div class="mb-3">
+                            <label for="" class="form-label">Employee</label>
+                            <select name="employee_id" class="form-control @error('employee_id') is-invalid @enderror">
+                                <option value="">Select an Employee</option>
+                                @foreach($employees as $employee)
+                                <option value="{{ $employee->id }}">{{ $employee->fullname }}</option>
+                                @endforeach
+                            </select>
+                            @error('employee_id')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    @endif
 
                     <div class="mb-3">
                         <label for="" class="form-label">Leave Type</label>

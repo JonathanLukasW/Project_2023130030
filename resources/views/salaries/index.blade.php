@@ -35,11 +35,13 @@
             <div class="card-body">
 
                 <div class="d-flex">
-                    <a href="{{ route('salaries.create')}}" class="btn btn-primary mb-3 ms-auto">New Salary</a>
+                    @if(session('role') == 'HR')
+                        <a href="{{ route('salaries.create')}}" class="btn btn-primary mb-3 ms-auto">New Salary</a>
+                    @endif
                 </div>
 
                 @if(session('success'))
-                    <div class="alert alert-success">{{ session('success') }}</div>
+                <div class="alert alert-success">{{ session('success') }}</div>
                 @endif
 
                 <table class="table table-striped" id="table1">
@@ -64,12 +66,16 @@
                             <td>{{ number_format($salary->net_salary) }}</td>
                             <td>{{ $salary->pay_date}}</td>
                             <td>
-                                 <a href="{{ route('salaries.show', $salary->id) }}" class="btn btn-info btn-sm">Salary Slip</a>
-                                <a href="{{ route('salaries.edit', $salary->id) }}" class="btn btn-warning btn-sm">Edit</a>
-                                <form action="{{ route('salaries.destroy', $salary->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this salary?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                <a href="{{ route('salaries.show', $salary->id) }}" class="btn btn-info btn-sm">Salary Slip</a>
+
+                                @if(session('role') == 'HR')
+                                    <a href="{{ route('salaries.edit', $salary->id) }}" class="btn btn-warning btn-sm">Edit</a>
+                                    <form action="{{ route('salaries.destroy', $salary->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this salary?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                    </form>
+                                @endif
                             </td>
                         </tr>
 

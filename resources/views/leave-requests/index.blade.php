@@ -39,7 +39,7 @@
                 </div>
 
                 @if(session('success'))
-                    <div class="alert alert-success">{{ session('success') }}</div>
+                <div class="alert alert-success">{{ session('success') }}</div>
                 @endif
 
                 <table class="table table-striped" id="table1">
@@ -50,7 +50,9 @@
                             <th>Start Date</th>
                             <th>End Date</th>
                             <th>Status</th>
+                            @if(session('role') == 'HR')
                             <th>Actions</th>
+                            @endif
                         </tr>
                     </thead>
                     <tbody>
@@ -62,25 +64,28 @@
                             <td>{{ $leaveRequest->end_date }}</td>
                             <td>
                                 @if($leaveRequest->status == 'Confirm')
-                                    <span class="text-success">{{ ucfirst($leaveRequest->status) }}</span>   
+                                <span class="text-success">{{ ucfirst($leaveRequest->status) }}</span>
                                 @elseif($leaveRequest->status == 'Reject')
-                                    <span class="text-danger">{{ ucfirst($leaveRequest->status) }}</span>
+                                <span class="text-danger">{{ ucfirst($leaveRequest->status) }}</span>
                                 @else
-                                    <span class="text-warning">{{ ucfirst($leaveRequest->status) }}</span>
+                                <span class="text-warning">{{ ucfirst($leaveRequest->status) }}</span>
                                 @endif
                             </td>
                             <td>
-                                @if($leaveRequest->status == 'pending' || $leaveRequest->status == 'reject')
+                                @if(session('role') == 'HR')
+                                    @if($leaveRequest->status == 'pending' || $leaveRequest->status == 'reject')
                                     <a href="{{ route('leave-requests.confirm', $leaveRequest->id) }}" class="btn btn-success btn-sm">Confirm</a>
-                                @else
+                                    @else
                                     <a href="{{ route('leave-requests.reject', $leaveRequest->id) }}" class="btn btn-secondary btn-sm">Reject</a>
-                                @endif
+                                    @endif
 
-                                <a href="{{ route('leave-requests.edit', $leaveRequest->id) }}" class="btn btn-warning btn-sm">Edit</a>
-                                <form action="{{ route('leave-requests.destroy', $leaveRequest->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this leave request?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                    <a href="{{ route('leave-requests.edit', $leaveRequest->id) }}" class="btn btn-warning btn-sm">Edit</a>
+                                    <form action="{{ route('leave-requests.destroy', $leaveRequest->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this leave request?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                    </form>
+                                @endif
                             </td>
                         </tr>
 

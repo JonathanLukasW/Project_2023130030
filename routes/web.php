@@ -15,32 +15,34 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/dashboard', [DashboardController::class, 'index']) ->name('dashboard');
-Route::resource('/tasks', TaskController::class);
+Route::middleware('auth')->group(function () {
 
-Route::resource('/employees', EmployeeController::class);
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard')->middleware(['role:HR,Developer']);
+    Route::resource('/tasks', TaskController::class)->middleware(['role:HR,Developer']);
 
-
-Route::resource('/departments', DepartmentController::class);
-
-
-Route::resource('/roles', RoleController::class);
+    Route::resource('/employees', EmployeeController::class)->middleware(['role:HR']);
 
 
-Route::resource('/presences', PresenceController::class);
+    Route::resource('/departments', DepartmentController::class)->middleware(['role:HR']);
 
 
-Route::resource('/salaries', SalaryController::class);
+    Route::resource('/roles', RoleController::class)->middleware(['role:HR']);
 
 
-Route::resource('/leave-requests', LeaveRequestController::class);
-Route::get('/Leave-requests/confirm/{id}', [LeaveRequestController::class, 'confirm'])->name('leave-requests.confirm');  
-Route::get('/Leave-requests/reject/{id}', [LeaveRequestController::class, 'reject'])->name('leave-requests.reject');  
+    Route::resource('/presences', PresenceController::class)->middleware(['role:HR,Developer']);
 
+
+    Route::resource('/salaries', SalaryController::class)->middleware(['role:HR,Developer']);
+
+
+    Route::resource('/leave-requests', LeaveRequestController::class)->middleware(['role:HR,Developer']);
+    Route::get('/Leave-requests/confirm/{id}', [LeaveRequestController::class, 'confirm'])->name('leave-requests.confirm')->middleware(['role:HR']);
+    Route::get('/Leave-requests/reject/{id}', [LeaveRequestController::class, 'reject'])->name('leave-requests.reject')->middleware(['role:HR']);
+});
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

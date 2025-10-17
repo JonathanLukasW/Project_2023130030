@@ -39,7 +39,7 @@
                 </div>
 
                 @if(session('success'))
-                    <div class="alert alert-success">{{ session('success') }}</div>
+                <div class="alert alert-success">{{ session('success') }}</div>
                 @endif
 
                 <table class="table table-striped" id="table1">
@@ -58,9 +58,9 @@
                             <td>{{ $department->description }}</td>
                             <td>
                                 @if($department->status == 'active')
-                                    <span class="text-success">active</span>
+                                <span class="text-success">active</span>
                                 @else
-                                    <span class="text-warning">inactive</span>
+                                <span class="text-warning">inactive</span>
                                 @endif
                             </td>
                             <td>
@@ -69,6 +69,7 @@
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                </form>
                             </td>
                         </tr>
 
