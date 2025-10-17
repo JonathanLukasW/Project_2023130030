@@ -11,15 +11,15 @@
     <div class="page-title">
         <div class="row">
             <div class="col-12 col-md-6 order-md-1 order-last">
-                <h3>Salaries</h3>
-                <p class="text-subtitle text-muted">Handle data salary</p>
+                <h3>Leave Request</h3>
+                <p class="text-subtitle text-muted">Handle leave request data</p>
             </div>
             <div class="col-12 col-md-6 order-md-2 order-first">
                 <nav aria-label="breadcrumb" class="breadcrumb-header float-start float-lg-end">
                     <ol class="breadcrumb">
                         <li class="breadcrumb-item"><a href="index.html">Dashboard</a></li>
-                        <li class="breadcrumb-item"><a href="index.html">salary</a></li>
-                        <li class="breadcrumb-item active" aria-current="page">New</li>
+                        <li class="breadcrumb-item"><a href="index.html">Leave Request</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Edit</li>
                     </ol>
                 </nav>
             </div>
@@ -29,7 +29,7 @@
         <div class="card">
             <div class="card-header">
                 <h5 class="card-title">
-                    Create
+                    Edit
                 </h5>
             </div>
             <div class="card-body">
@@ -42,16 +42,18 @@
                             @endforeach
                         </ul>
                     </div>
-                @endif  
+                @endif
 
-                <form action="{{ route('salaries.store')}}" method="POST">
+                <form action="{{ route('leave-requests.update', $leaveRequest->id)}}" method="POST">
                     @csrf
+                    @method('PUT')
 
                     <div class="mb-3">
                         <label for="" class="form-label">Employee</label>
                         <select name="employee_id" class="form-control @error('employee_id') is-invalid @enderror">
+                            <option value="">Select an Employee</option>
                             @foreach($employees as $employee)
-                            <option value="{{ $employee->id }}">{{ $employee->fullname }}</option>
+                            <option value="{{ $employee->id }}" {{ ($employee->id == $leaveRequest->employee_id) ? 'selected' : ''}}>{{ $employee->fullname }}</option>
                             @endforeach
                         </select>
                         @error('employee_id')
@@ -60,39 +62,36 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="" class="form-label">Salary</label>
-                        <input type="number" class="form-control" name="salary" required>
-                        @error('salary')
+                        <label for="" class="form-label">Leave Type</label>
+                        <select name="leave_type" id="status" class="form-control">
+                            <option value="Sick" {{ $leaveRequest->leave_type == 'Sick' ? 'selected' : '' }}>Sick</option>
+                            <option value="Vacation" {{ $leaveRequest->leave_type == 'Vacation' ? 'selected' : '' }}>Vacation</option>
+                            <option value="Personal" {{ $leaveRequest->leave_type == 'Personal' ? 'selected' : '' }}>Personal</option>
+                            <option value="Birth Leave" {{ $leaveRequest->leave_type == 'Birth Leave' ? 'selected' : '' }}>Birth Leave</option>
+                        </select>
+                        @error('leave_type')
                         <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
 
                     <div class="mb-3">
-                        <label for="" class="form-label">Deductions</label>
-                        <input type="number" class="form-control" name="deductions" required>
-                        @error('deductions')
+                        <label for="" class="form-label">Start Date</label>
+                        <input type="text" class="form-control date" name="start_date" value="{{ old('start_date', $leaveRequest->start_date) }}" required>
+                        @error('start_date')
                         <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
 
                     <div class="mb-3">
-                        <label for="" class="form-label">Bonuses</label>
-                        <input type="number" class="form-control" name="bonuses" required>
-                        @error('bonuses')
+                        <label for="" class="form-label">End Date</label>
+                        <input type="text" class="form-control date" name="end_date" value="{{ old('end_date', $leaveRequest->end_date) }}" required>
+                        @error('end_date')
                         <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
 
-                    <div class="mb-3">
-                        <label for="" class="form-label">Pay Date</label>
-                        <input type="text" class="form-control date" name="pay_date" required>
-                        @error('pay_date')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <button type="submit" class="btn btn-primary">Submit</button>
-                    <a href="{{ route('salaries.index') }}" class="btn btn-secondary">Back</a>
+                    <button type="submit" class="btn btn-primary">Update</button>
+                    <a href="{{ route('leave-requests.index') }}" class="btn btn-secondary">Back</a>
 
                 </form>
             </div>

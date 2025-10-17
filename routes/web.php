@@ -9,6 +9,7 @@ use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PresenceController;
 use App\Http\Controllers\SalaryController;
+use App\Http\Controllers\LeaveRequestController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -18,10 +19,23 @@ Route::get('/dashboard', [DashboardController::class, 'index']) ->name('dashboar
 Route::resource('/tasks', TaskController::class);
 
 Route::resource('/employees', EmployeeController::class);
+
+
 Route::resource('/departments', DepartmentController::class);
+
+
 Route::resource('/roles', RoleController::class);
+
+
 Route::resource('/presences', PresenceController::class);
+
+
 Route::resource('/salaries', SalaryController::class);
+
+
+Route::resource('/leave-requests', LeaveRequestController::class);
+Route::get('/Leave-requests/confirm/{id}', [LeaveRequestController::class, 'confirm'])->name('leave-requests.confirm');  
+Route::get('/Leave-requests/reject/{id}', [LeaveRequestController::class, 'reject'])->name('leave-requests.reject');  
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
