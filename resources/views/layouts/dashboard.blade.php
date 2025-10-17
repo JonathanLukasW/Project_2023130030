@@ -13,6 +13,8 @@
     <link rel="stylesheet" href="{{ asset('template/dist/assets/compiled/css/iconly.css') }}">
     <link rel="stylesheet" href="{{ asset('template/dist/assets/extensions/simple-datatables/style.css') }}">
     <link rel="stylesheet" href="{{ asset('template/dist/assets/extensions/table-datatables.css') }}">
+    <link rel="stylesheet" href="{{ asset('template/dist/assets/compiled/css/ui-icons-dripicons.css') }}">
+    <link rel="stylesheet" href="{{ asset('template/dist/assets/extensions/@icon/dripicons/dripicons.css') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 </head>
 
@@ -117,13 +119,13 @@
 
                         @if (in_array(session('role'), ['Developer','Sales']))
 
-                        <li class="sidebar-item {{ request()->is('dashboard') ? 'active' : '' }}" >
+                        <li class="sidebar-item {{ request()->is('dashboard') ? 'active' : '' }}">
                             <a href="{{ url('/dashboard') }}" class='sidebar-link'>
                                 <i class="bi bi-grid-fill"></i>
                                 <span>Dashboard</span>
                             </a>
                         </li>
-                        <li class="sidebar-item {{ request()->is('tasks') ? 'active' : '' }}" >
+                        <li class="sidebar-item {{ request()->is('tasks') ? 'active' : '' }}">
                             <a href="{{ url('/tasks') }}" class='sidebar-link'>
                                 <i class="bi bi-check-circle-fill"></i>
                                 <span>Tasks</span>
@@ -190,6 +192,10 @@
     <script src="{{ asset('template/dist/assets/extensions/simple-datatables/umd/simple-datatables.js') }}"></script>
     <script src="{{ asset('template/dist/assets/static/js/pages/simple-datatables.js') }}"></script>
 
+    <!-- Need: chartJs -->
+    <script src="{{ asset('template/dist/assets/extensions/chart.js/chart.umd.js') }}"></script>
+
+    <!-- Need : buat tanggal-->
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script>
         let date = flatpickr('.date', {
@@ -200,6 +206,51 @@
             dateFormat: "Y-m-d H:i:s",
             enableTime: true,
         });
+
+        var ctxBar = document.getElementById('presence').getContext('2d');
+        var myBar = new Chart(ctxBar, {
+            type: 'bar',
+            data: {
+                labels: [January, February, March, April, May, June, July],
+                datasets: [{
+                    label: 'Total',
+                    data: [],
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                title: {
+                    display: true,
+                    text: 'Latest Presence'
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        function updateData() {
+            fetch('/dashboard/presence')
+                .then(response => response.json())
+                .then((output) => {
+                    myBar.data.datasets[
+                        {
+                            label: 'Total',
+                            data: output,
+                            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                        }
+                    ];
+                    myBar.update();
+                })
+        }
+
+        updateData();
     </script>
 
 </body>
