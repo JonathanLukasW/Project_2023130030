@@ -53,9 +53,9 @@
                     <label for="">Status</label>
                     <p>
                         @if($task->status == 'pending')
-                            <span class="text-success">{{ ucfirst($task->status) }}</span>
-                        @else
                             <span class="text-warning">{{ ucfirst($task->status) }}</span>
+                        @else
+                            <span class="text-success">{{ ucfirst($task->status) }}</span>
                         @endif
                     </p>
                 </div>

@@ -35,7 +35,7 @@
             <div class="card-body">
 
                 <div class="d-flex">
-                    @if(session('role') == 'HR')
+                    @if(session('role') == 'HR Manager')
                     <a href="{{ route('tasks.create')}}" class="btn btn-primary mb-3 ms-auto">New Task</a>
                     @endif
                 </div>
@@ -78,7 +78,7 @@
                                 <a href="{{ route('tasks.pending', $task->id) }}" class="btn btn-warning btn-sm">Mark as Pending</a>
                                 @endif
 
-                                @if(session('role') == 'HR')
+                                @if(session('role') == 'HR Manager')
                                 <a href="{{ route('tasks.edit', $task->id) }}" class="btn btn-warning btn-sm">Edit</a>
                                 <form action="{{ route('tasks.destroy', $task->id) }}" method="POST" style="display:inline;">
                                     @csrf

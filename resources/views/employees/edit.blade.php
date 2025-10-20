@@ -128,7 +128,7 @@
                         <label for="" class="form-label">Status</label>
                         <select name="status" class="form-control @error('status') is-invalid @enderror">
                             <option value="active" {{ $employee->status == 'active' ? 'selected' : '' }}>Active</option>
-                            <option value="inactive" {{ $employee->status == 'inactive' ? 'selected' : '' }}>Inactive</option>
+                            <option value="inactive" {{ $employee->status == 'inactive' ? 'selected' : '' }}>Inactive</option> 
                         </select>
                         @error('status')
                         <div class="invalid-feedback">{{ $message }}</div>

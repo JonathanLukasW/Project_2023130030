@@ -65,7 +65,7 @@
                     <ul class="menu">
                         <li class="sidebar-title">Menu</li>
 
-                        @if (session('role') == 'HR')
+                        @if (session('role') == 'HR Manager')
                         <li class="sidebar-item {{ request()->is('dashboard') ? 'active' : '' }}">
                             <a href="{{ url('/dashboard') }}" class='sidebar-link'>
                                 <i class="bi bi-grid-fill"></i>
@@ -117,7 +117,7 @@
 
                         @endif
 
-                        @if (in_array(session('role'), ['Developer','Sales']))
+                        @if (in_array(session('role'), ['Developer','Supervisor','Accounting','Sales']))
 
                         <li class="sidebar-item {{ request()->is('dashboard') ? 'active' : '' }}">
                             <a href="{{ url('/dashboard') }}" class='sidebar-link'>
@@ -207,51 +207,64 @@
             enableTime: true,
         });
 
-        var ctxBar = document.getElementById('presence').getContext('2d');
-        var myBar = new Chart(ctxBar, {
-            type: 'bar',
-            data: {
-                labels: [January, February, March, April, May, June, July],
-                datasets: [{
-                    label: 'Total',
-                    data: [],
-                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                title: {
-                    display: true,
-                    text: 'Latest Presence'
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
+        document.addEventListener('DOMContentLoaded', function() {
+            if (document.getElementById('presence')) {
 
-        function updateData() {
-            fetch('/dashboard/presence')
-                .then(response => response.json())
-                .then((output) => {
-                    myBar.data.datasets[
-                        {
-                            label: 'Total',
-                            data: output,
+                var ctxBar = document.getElementById('presence').getContext('2d');
+                var myBar = new Chart(ctxBar, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'],
+                        datasets: [{
+                            label: 'Total Kehadiran',
+                            data: [],
                             backgroundColor: 'rgba(54, 162, 235, 0.2)',
                             borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            title: {
+                                display: true,
+                                text: 'Total Kehadiran Bulanan (2025)'
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                suggestedMax: 40
+                            }
                         }
-                    ];
-                    myBar.update();
-                })
-        }
+                    }
+                });
 
-        updateData();
+                function updateData() {
+                    fetch('{{ url("/dashboard/presence") }}')
+                        .then(response => response.json())
+                        .then((output) => {
+                            if (output && Array.isArray(output) && output.length === 12) {
+                                myBar.data.datasets[0].data = output;
+                                myBar.update();
+                            } else {
+                                console.error("Data kehadiran yang diterima dari server tidak valid:", output);
+                                myBar.data.datasets[0].data = Array(12).fill(0);
+                                myBar.update();
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Fetch error:', error);
+                        });
+                }
+                updateData();
+            }
+        });
     </script>
+
 
 </body>
 

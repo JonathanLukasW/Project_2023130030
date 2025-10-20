@@ -8,6 +8,8 @@ use App\Models\Department;
 use App\Models\Salary;
 use App\Models\Presence;
 use App\Models\Task;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
@@ -24,19 +26,26 @@ class DashboardController extends Controller
 
     public function presence()
     {
-        $data = Presence::where('status', 'present')
-            ->selectRaw('MONTH(date) as month, YEAR(date) as year, COUNT(*) as total_present')
-            ->groupBy('year', 'month')
-            ->orderBy('month', 'asc')
-            ->get();
+        $targetYear = 2025; 
+        
+        $rawMonthlyData = DB::select("
+            SELECT MONTH(date) as month, COUNT(*) as total
+            FROM presences
+            WHERE status = 'present' AND YEAR(date) = ?
+            GROUP BY MONTH(date)
+            ORDER BY MONTH(date) ASC
+        ", [$targetYear]);
 
-        $temp = [];
-        $i = 0;
-        foreach ($data as $item) {
-            $item[$i] = $item->total_present;
-            $i++;
+        $dataForChart = array_fill(0, 12, 0); 
+        
+        foreach ($rawMonthlyData as $item) {
+            $monthIndex = $item->month - 1; 
+            
+            if ($monthIndex >= 0 && $monthIndex < 12) {
+                $dataForChart[$monthIndex] = $item->total; 
+            }
         }
 
-        return response()->json($temp);
+        return response()->json($dataForChart);
     }
 }

@@ -35,7 +35,7 @@
             <div class="card-body">
 
                 <div class="d-flex">
-                    @if(session('role') == 'HR')
+                    @if(session('role') == 'HR Manager')
                         <a href="{{ route('salaries.create')}}" class="btn btn-primary mb-3 ms-auto">New Salary</a>
                     @endif
                 </div>
@@ -68,7 +68,7 @@
                             <td>
                                 <a href="{{ route('salaries.show', $salary->id) }}" class="btn btn-info btn-sm">Salary Slip</a>
 
-                                @if(session('role') == 'HR')
+                                @if(session('role') == 'HR Manager')
                                     <a href="{{ route('salaries.edit', $salary->id) }}" class="btn btn-warning btn-sm">Edit</a>
                                     <form action="{{ route('salaries.destroy', $salary->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this salary?');">
                                         @csrf

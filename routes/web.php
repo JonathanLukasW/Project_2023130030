@@ -17,31 +17,31 @@ Route::get('/', function () {
 
 Route::middleware('auth')->group(function () {
 
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard')->middleware(['role:HR,Developer']);
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard')->middleware(['role:HR Manager,Developer,Supervisor,Accounting,Sales']);
     Route::get('/dashboard/presence', [DashboardController::class, 'presence']);
 
-    Route::resource('/tasks', TaskController::class)->middleware(['role:HR,Developer']);
-    Route::get('/tasks/done/{id}', [TaskController::class, 'done'])->name('tasks.done')->middleware(['role:HR,Developer']);
-    Route::get('/tasks/pending/{id}', [TaskController::class, 'pending'])->name('tasks.pending')->middleware(['role:HR,Developer']);
+    Route::resource('/tasks', TaskController::class)->middleware(['role:HR Manager,Developer,Supervisor,Accounting,Sales']);
+    Route::get('/tasks/done/{id}', [TaskController::class, 'done'])->name('tasks.done')->middleware(['role:HR Manager,Developer,Supervisor,Accounting,Sales']);
+    Route::get('/tasks/pending/{id}', [TaskController::class, 'pending'])->name('tasks.pending')->middleware(['role:HR Manager,Developer,Supervisor,Accounting,Sales']);
 
-    Route::resource('/employees', EmployeeController::class)->middleware(['role:HR']);
-
-
-    Route::resource('/departments', DepartmentController::class)->middleware(['role:HR']);
+    Route::resource('/employees', EmployeeController::class)->middleware(['role:HR Manager']);
 
 
-    Route::resource('/roles', RoleController::class)->middleware(['role:HR']);
+    Route::resource('/departments', DepartmentController::class)->middleware(['role:HR Manager']);
 
 
-    Route::resource('/presences', PresenceController::class)->middleware(['role:HR,Developer']);
+    Route::resource('/roles', RoleController::class)->middleware(['role:HR Manager']);
 
 
-    Route::resource('/salaries', SalaryController::class)->middleware(['role:HR,Developer']);
+    Route::resource('/presences', PresenceController::class)->middleware(['role:HR Manager,Developer,Supervisor,Accounting,Sales']);
 
 
-    Route::resource('/leave-requests', LeaveRequestController::class)->middleware(['role:HR,Developer']);
-    Route::get('/Leave-requests/confirm/{id}', [LeaveRequestController::class, 'confirm'])->name('leave-requests.confirm')->middleware(['role:HR']);
-    Route::get('/Leave-requests/reject/{id}', [LeaveRequestController::class, 'reject'])->name('leave-requests.reject')->middleware(['role:HR']);
+    Route::resource('/salaries', SalaryController::class)->middleware(['role:HR Manager,Developer,Supervisor,Accounting,Sales']);
+
+
+    Route::resource('/leave-requests', LeaveRequestController::class)->middleware(['role:HR Manager,Developer,Supervisor,Accounting,Sales']);
+    Route::get('/Leave-requests/confirm/{id}', [LeaveRequestController::class, 'confirm'])->name('leave-requests.confirm')->middleware(['role:HR Manager']);
+    Route::get('/Leave-requests/reject/{id}', [LeaveRequestController::class, 'reject'])->name('leave-requests.reject')->middleware(['role:HR Manager']);
 });
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

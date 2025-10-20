@@ -81,7 +81,7 @@
                         <select name="status" id="status" class="form-select">
                             <option value="present">Present</option>
                             <option value="absent">Absent</option>
-                            <option value="leave">Leave</option>
+                            <option value="sick">Sick</option>
                         </select>
                         @error('status')
                         <div class="invalid-feedback">{{ $message }}</div>

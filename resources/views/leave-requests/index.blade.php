@@ -50,7 +50,7 @@
                             <th>Start Date</th>
                             <th>End Date</th>
                             <th>Status</th>
-                            @if(session('role') == 'HR')
+                            @if(session('role') == 'HR Manager')
                             <th>Actions</th>
                             @endif
                         </tr>
@@ -63,16 +63,16 @@
                             <td>{{ $leaveRequest->start_date }}</td>
                             <td>{{ $leaveRequest->end_date }}</td>
                             <td>
-                                @if($leaveRequest->status == 'Confirm')
+                                @if($leaveRequest->status == 'approved')
                                 <span class="text-success">{{ ucfirst($leaveRequest->status) }}</span>
-                                @elseif($leaveRequest->status == 'Reject')
+                                @elseif($leaveRequest->status == 'rejected')
                                 <span class="text-danger">{{ ucfirst($leaveRequest->status) }}</span>
                                 @else
                                 <span class="text-warning">{{ ucfirst($leaveRequest->status) }}</span>
                                 @endif
                             </td>
                             <td>
-                                @if(session('role') == 'HR')
+                                @if(session('role') == 'HR Manager')
                                     @if($leaveRequest->status == 'pending' || $leaveRequest->status == 'reject')
                                     <a href="{{ route('leave-requests.confirm', $leaveRequest->id) }}" class="btn btn-success btn-sm">Confirm</a>
                                     @else

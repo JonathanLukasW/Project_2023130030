@@ -1,0 +1,22 @@
+{
+  "name": "webcito/bs-calendar",
+  "description": "description",
+  "minimum-stability": "stable",
+  "version": "1.2.7",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "thomas",
+      "email": "t.kirsch@webcito.de"
+    }
+  ],
+  "require": {
+    "components/jquery": "^3",
+    "twbs/bootstrap": "^4 || ^5",
+    "twbs/bootstrap-icons": "^1"
+  }
+  ,
+  "require-dev": {
+    "roave/security-advisories": "dev-latest"
+  }
+}
