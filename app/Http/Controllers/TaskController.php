@@ -5,21 +5,27 @@ namespace App\Http\Controllers;
 use App\Models\Employee;
 use Illuminate\Http\Request;
 use App\Models\Task;
+use Illuminate\Support\Facades\Auth;
 
 class TaskController extends Controller
 {
     public function index()
     {
-
-        if (session('role') == 'HR Manager') {
-            $tasks = Task::all();
-        } else {
-            $tasks = Task::where('assigned_to', session('employee_id'))->get();
+        $userRole = session('role');
+        $employeeId = session('employee_id');
+        $baseQuery = Task::with('employee');
+        
+        if (!($userRole === 'HR Manager')) {
+            $baseQuery->where('assigned_to', $employeeId);
         }
 
+        $tasks = $baseQuery->get();
+        $tasks = $tasks->sortBy(function ($task) {
+            return $task->status === 'pending' ? 1 : 2;
+        })->values(); 
         return view('tasks.index', compact('tasks'));
     }
-
+    
     public function create()
     {
 
@@ -73,7 +79,7 @@ class TaskController extends Controller
     public function done(int $id)
     {
         $task = Task::find($id);
-        $task->update(['status' => 'done']);
+        $task->update(['status' => 'completed']);
 
         return redirect()->route('tasks.index')->with('success', 'Task marked as done successfully');
     }

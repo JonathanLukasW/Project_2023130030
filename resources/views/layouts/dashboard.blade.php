@@ -78,40 +78,54 @@
                                 <span>Tasks</span>
                             </a>
                         </li>
-                        <li class="sidebar-item {{ request()->is('employees') ? 'active' : '' }}">
-                            <a href="{{ url('/employees') }}" class='sidebar-link'>
+                        <li class="sidebar-item has-sub">
+                            <a href="#" class='sidebar-link'>
                                 <i class="bi bi-people-fill"></i>
-                                <span>Employees</span>
+                                <span>Kepegawaian</span>
                             </a>
+                            <ul class="submenu">
+                                <li class="submenu-item {{ request()->is('employees') ? 'active' : '' }}">
+                                    <a href="{{ url('/employees') }}" class="submenu-link">
+                                        <i class="bi bi-file-person-fill"></i>
+                                        <span>Employees</span>
+                                    </a>
+                                </li>
+                                <li class="submenu-item {{ request()->is('departments') ? 'active' : '' }}">
+                                    <a href="{{ url('/departments') }}" class="submenu-link">
+                                        <i class="bi bi-building"></i>
+                                        <span>Departments</span></a>
+                                </li>
+                                <li class="submenu-item {{ request()->is('roles') ? 'active' : '' }}">
+                                    <a href="{{ url('/roles') }}" class="submenu-link">
+                                        <i class="bi bi-person-fill"></i>
+                                        <span>Roles</span>
+                                    </a>
+                                </li>
+                            </ul>
                         </li>
-                        <li class="sidebar-item {{ request()->is('departments') ? 'active' : '' }}">
-                            <a href="{{ url('/departments') }}" class='sidebar-link'>
-                                <i class="bi bi-briefcase"></i>
-                                <span>Departments</span>
+                        <li class="sidebar-item has-sub">
+                            <a href="#" class='sidebar-link'>
+                                <i class="bi bi-calendar3"></i>
+                                <span>Kehadiran</span>
                             </a>
-                        </li>
-                        <li class="sidebar-item {{ request()->is('roles') ? 'active' : '' }}">
-                            <a href="{{ url('/roles') }}" class='sidebar-link'>
-                                <i class="bi bi-tag"></i>
-                                <span>Roles</span>
-                            </a>
-                        </li>
-                        <li class="sidebar-item {{ request()->is('presences') ? 'active' : '' }}">
-                            <a href="{{ url('/presences') }}" class='sidebar-link'>
-                                <i class="bi bi-table"></i>
-                                <span>Presences</span>
-                            </a>
+                            <ul class="submenu ">
+                                <li class="submenu-item {{ request()->is('presences') ? 'active' : '' }}">
+                                    <a href="{{ url('/presences') }}" class="submenu-link">
+                                        <i class="bi bi-calendar2-check"></i>
+                                        <span>Presences</span></a>
+                                </li>
+                                <li class="submenu-item {{ request()->is('leave-requests') ? 'active' : '' }}">
+                                    <a href="{{ url('/leave-requests') }}" class="submenu-link">
+                                        <i class="bi bi-file-earmark-arrow-up"></i>
+                                        <span>Leave Requests</span>
+                                    </a>
+                                </li>
+                            </ul>
                         </li>
                         <li class="sidebar-item {{ request()->is('salaries') ? 'active' : '' }}">
                             <a href="{{ url('/salaries') }}" class='sidebar-link'>
                                 <i class="bi bi-currency-dollar"></i>
                                 <span>Salaries</span>
-                            </a>
-                        </li>
-                        <li class="sidebar-item {{ request()->is('leave-requests') ? 'active' : '' }}">
-                            <a href="{{ url('/leave-requests') }}" class='sidebar-link'>
-                                <i class="bi bi-shift-fill"></i>
-                                <span>Leave Requests</span>
                             </a>
                         </li>
 
@@ -131,22 +145,29 @@
                                 <span>Tasks</span>
                             </a>
                         </li>
-                        <li class="sidebar-item {{ request()->is('presences') ? 'active' : '' }}">
-                            <a href="{{ url('/presences') }}" class='sidebar-link'>
-                                <i class="bi bi-table"></i>
-                                <span>Presences</span>
+                        <li class="sidebar-item has-sub">
+                            <a href="#" class='sidebar-link'>
+                                <i class="bi bi-calendar3"></i>
+                                <span>Kehadiran</span>
                             </a>
+                            <ul class="submenu ">
+                                <li class="submenu-item {{ request()->is('presences') ? 'active' : '' }}">
+                                    <a href="{{ url('/presences') }}" class="submenu-link">
+                                        <i class="bi bi-calendar2-check"></i>
+                                        <span>Presences</span></a>
+                                </li>
+                                <li class="submenu-item {{ request()->is('leave-requests') ? 'active' : '' }}">
+                                    <a href="{{ url('/leave-requests') }}" class="submenu-link">
+                                        <i class="bi bi-file-earmark-arrow-up"></i>
+                                        <span>Leave Requests</span>
+                                    </a>
+                                </li>
+                            </ul>
                         </li>
                         <li class="sidebar-item {{ request()->is('salaries') ? 'active' : '' }}">
                             <a href="{{ url('/salaries') }}" class='sidebar-link'>
                                 <i class="bi bi-currency-dollar"></i>
                                 <span>Salaries</span>
-                            </a>
-                        </li>
-                        <li class="sidebar-item {{ request()->is('leave-requests') ? 'active' : '' }}">
-                            <a href="{{ url('/leave-requests') }}" class='sidebar-link'>
-                                <i class="bi bi-shift-fill"></i>
-                                <span>Leave Requests</span>
                             </a>
                         </li>
                         @endif

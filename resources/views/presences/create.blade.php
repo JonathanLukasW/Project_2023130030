@@ -127,7 +127,7 @@
 
     const officeLat = -6.895505;
     const officeLong = 107.613252;
-    const threshold = 0.001;
+    const threshold = 0.1;
 
     navigator.geolocation.getCurrentPosition(function(position) {
         const lat = position.coords.latitude;

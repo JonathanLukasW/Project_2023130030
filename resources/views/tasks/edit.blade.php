@@ -75,7 +75,7 @@
                         <label for="" class="form-label">Status</label>
                         <select name="status" id="status" class="form-control @error('status') is-invalid @enderror">
                             <option value="pending" @if(old('status', $task->status) == 'pending') selected @endif>Pending</option>
-                            <option value="on progress" @if(old('status', $task->status) == 'on progress') selected @endif>On Progress</option>
+                            <option value="completed" @if(old('status', $task->status) == 'completed') selected @endif>completed</option>
                         </select>
                         @error('status')
                             <div class="invalid-feedback">{{ $message }}</div>

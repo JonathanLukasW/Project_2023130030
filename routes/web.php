@@ -11,6 +11,11 @@ use App\Http\Controllers\PresenceController;
 use App\Http\Controllers\SalaryController;
 use App\Http\Controllers\LeaveRequestController;
 
+
+Route::get('captcha-image', function() {
+    return captcha_img('flat'); 
+})->name('captcha.image');
+
 Route::get('/', function () {
     return redirect()->route('login');
 });

@@ -4,15 +4,12 @@
 
     <form method="POST" action="{{ route('login') }}">
         @csrf
-
-        <!-- Email Address -->
         <div>
             <x-input-label for="email" :value="__('Email')" />
             <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 
-        <!-- Password -->
         <div class="mt-4">
             <x-input-label for="password" :value="__('Password')" />
 
@@ -23,6 +20,30 @@
 
             <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
+
+      <div class="mt-4">
+            {{-- Mengubah value label menjadi string biasa --}}
+            <x-input-label for="captcha" value="Jawab: Masukkan kode di bawah" /> 
+
+            <!-- Menampilkan gambar Captcha -->
+            <div class="mt-1 flex items-center">
+                {{-- MEMANGGIL HELPER LANGSUNG: Syntax ini 100% BENAR --}}
+                <img class="captcha-img" src="{{ captcha_src('flat') }}" alt="captcha" style="border: 1px solid #ccc; border-radius: 4px;"> 
+                
+                {{-- Tombol Refresh --}}
+                <button type="button" class="ms-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 underline" 
+                        onclick="document.querySelector('.captcha-img').src = '{{ captcha_src('flat') }}?' + new Date().getTime(); return false;">
+                    Refresh
+                </button>
+            </div>
+            
+            <!-- Input Captcha -->
+            <x-text-input id="captcha" class="block mt-2 w-full" type="text" name="captcha" required />
+
+            <!-- Menampilkan error Captcha -->
+            <x-input-error :messages="$errors->get('captcha')" class="mt-2" />
+        </div>
+
 
         <!-- Remember Me -->
         <div class="block mt-4">
