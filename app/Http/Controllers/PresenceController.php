@@ -2,19 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\Presence;
 use App\Models\Employee;
+use App\Models\Presence;
+use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Validator; 
 
 class PresenceController extends Controller
 {
     public function index()
     {
         if (session('role') == 'HR Manager') {
-            $presences = Presence::all();
+            $presences = Presence::with('employee')->get();
         } else {
-            $presences = Presence::where('employee_id', session('employee_id'))->get();
+            $presences = Presence::with('employee')->where('employee_id', session('employee_id'))->get();
         }
         return view('presences.index', compact('presences'));
     }
@@ -22,53 +23,57 @@ class PresenceController extends Controller
     public function create()
     {
         $employees = Employee::all();
-
         return view('presences.create', compact('employees'));
     }
 
     public function store(Request $request)
     {
-
         if (session('role') == 'HR Manager') {
-            
-        $validated = $request->validate([
-            'employee_id' => 'required',
-            'check_in' => 'required|date',
-            'check_out' => 'required|date',
-            'date' => 'required|date',
-            'status' => 'required|string',
-        ]);
+            $validated = $request->validate([
+                'employee_id' => 'required|exists:employees,id',
+                'check_in' => 'nullable|date_format:Y-m-d H:i:s', 
+                'check_out' => 'nullable|date_format:Y-m-d H:i:s', 
+                'date' => 'required|date_format:Y-m-d',
+                'status' => 'required|in:present,absent,leave',
+            ]);
 
-        Presence::create($validated);
-    } else {
-        Presence::create([
-            'employee_id' => session('employee_id'),
-            'check_in' => Carbon::now()->format('Y-m-d H:i:s'),
-            'latitude' => $request->latitude,
-            'longitude' => $request->longitude,
-            'date' => Carbon::now()->format('Y-m-d'),
-            'status' => 'present',
-        ]);
-    }
+            if ($validated['status'] !== 'present') {
+                $validated['check_in'] = null;
+                $validated['check_out'] = null;
+            }
+            
+            Presence::create($validated);
+        } else {
+            Presence::create([
+                'employee_id' => session('employee_id'),
+                'check_in' => Carbon::now()->format('Y-m-d H:i:s'),
+                'date' => Carbon::now()->format('Y-m-d'),
+                'status' => 'present',
+            ]);
+        }
+        
         return redirect()->route('presences.index')->with('success', 'Presence recorded successfully.');
     }
 
     public function edit(Presence $presence)
     {
         $employees = Employee::all();
-
         return view('presences.edit', compact('presence', 'employees'));
     }
 
     public function update(Request $request, Presence $presence)
     {
         $validated = $request->validate([
-            'employee_id' => 'required',
-            'check_in' => 'required|date',
-            'check_out' => 'required|date',
-            'date' => 'required|date',
-            'status' => 'required|string',
+            'employee_id' => 'required|exists:employees,id',
+            'check_in' => 'nullable|date_format:Y-m-d H:i:s', 
+            'check_out' => 'nullable|date_format:Y-m-d H:i:s', 
+            'date' => 'required|date_format:Y-m-d',
+            'status' => 'required|in:present,absent,leave',
         ]);
+        if ($validated['status'] !== 'present') {
+            $validated['check_in'] = null;
+            $validated['check_out'] = null;
+        }
 
         $presence->update($validated);
 

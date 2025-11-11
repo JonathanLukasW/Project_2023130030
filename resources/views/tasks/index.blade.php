@@ -33,9 +33,9 @@
             <div class="card-body">
 
                 <div class="d-flex">
-                    @if(session('role') == 'HR Manager')
+                    @can('task_create') {{-- Pengecekan Spatie untuk tombol New Task --}}
                     <a href="{{ route('tasks.create')}}" class="btn btn-primary mb-3 ms-auto">New Task</a>
-                    @endif
+                    @endcan
                 </div>
 
                 @if(session('success'))
@@ -43,7 +43,6 @@
                 @endif
 
                 <div class="table-responsive">
-                    {{-- ID TABLE table1 akan memicu inisialisasi Simple-DataTables --}}
                     <table class="table table-striped" id="table1"> 
                         <thead>
                             <tr>
@@ -70,22 +69,30 @@
                                     @endif
                                 </td>
                                 <td>
+                                    {{-- Tombol View --}}
                                     <a href="{{ route('tasks.show', $task->id) }}" class="btn btn-info btn-sm">View</a>
 
-                                    @if($task->status == 'pending')
-                                    <a href="{{ route('tasks.done', $task->id) }}" class="btn btn-success btn-sm">Mark as Done</a>
-                                    @else
-                                    <a href="{{ route('tasks.pending', $task->id) }}" class="btn btn-warning btn-sm">Mark as Pending</a>
-                                    @endif
+                                    {{-- Tombol Mark Status (task_mark_status) --}}
+                                    @can('task_mark_status')
+                                        @if($task->status == 'pending')
+                                        <a href="{{ route('tasks.done', $task->id) }}" class="btn btn-success btn-sm">Mark as Done</a>
+                                        @else
+                                        <a href="{{ route('tasks.pending', $task->id) }}" class="btn btn-warning btn-sm">Mark as Pending</a>
+                                        @endif
+                                    @endcan
 
-                                    @if(session('role') == 'HR Manager')
+                                    {{-- Tombol Edit/Delete (task_edit, task_delete) --}}
+                                    @can('task_edit')
                                     <a href="{{ route('tasks.edit', $task->id) }}" class="btn btn-warning btn-sm">Edit</a>
+                                    @endcan
+                                    
+                                    @can('task_delete')
                                     <form action="{{ route('tasks.destroy', $task->id) }}" method="POST" style="display:inline;">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this task?')">Delete</button>
                                     </form>
-                                    @endif
+                                    @endcan
                                 </td>
                             </tr>
                             @endforeach
@@ -104,16 +111,10 @@
     document.addEventListener('DOMContentLoaded', function () {
         const table = document.getElementById('table1');
         if (table) {
-            // Karena ini adalah satu tabel, Simple-DataTables akan bekerja dengan ID tunggal
             new simpleDatatables.DataTable(table, {
                 searchable: true,
                 perPageSelect: [5, 10, 20, 50],
             });
-        } else {
-             // Debugging: Jika elemen table1 tidak ditemukan (seharusnya tidak terjadi)
-             console.error("Simple DataTables: Element with ID 'table1' not found.");
         }
     });
 </script>
-@endpush
-@endsection
