@@ -18,7 +18,7 @@ class PermissionSeeder extends Seeder
             'dashboard_view',
             'task_view', 'task_create', 'task_edit', 'task_delete', 'task_mark_status',
             'employee_view', 'employee_manage', 
-            'department_manage', 'role_manage',
+            'department_manage', 'position_manage',
             'presence_view_all', 'presence_create',
             'salary_view_all',
             'leave_manage', 'leave_confirm_reject',

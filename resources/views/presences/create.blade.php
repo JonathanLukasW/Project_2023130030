@@ -34,8 +34,12 @@
             </div>
             <div class="card-body">
 
-                @if(session('role') == "HR")
+                {{-- --- PERUBAHAN: Ganti 'session' ke '@can' --- --}}
+                {{-- Cek pakai Izin (Permission) Spatie, bukan Session! --}}
+                {{-- (Izin 'presence_view_all' hanya dimiliki HR/Admin di Seeder & Controller) --}}
+                @can('presence_view_all')
 
+                {{-- INI FORM UNTUK ADMIN (INPUT MANUAL) --}}
                 <form action="{{ route('presences.store')}}" method="POST">
                     @csrf
 
@@ -81,7 +85,7 @@
                         <select name="status" id="status" class="form-select">
                             <option value="present">Present</option>
                             <option value="absent">Absent</option>
-                            <option value="sick">Sick</option>
+                            <option value="leave">Leave</option> {{-- Ganti dari 'sick' --}}
                         </select>
                         @error('status')
                         <div class="invalid-feedback">{{ $message }}</div>
@@ -94,6 +98,8 @@
                 </form>
 
                 @else
+
+                {{-- INI FORM UNTUK KARYAWAN BIASA (PAKAI GPS) --}}
                 <form action="{{ route('presences.store') }}" method="POST">
                     @csrf
 
@@ -101,12 +107,12 @@
 
                     <div class="mb-3">
                         <label for="" class="form-label">Latitude</label>
-                        <input type="text" class="form-control " name="latitude" id="latitude" required>
+                        <input type="text" class="form-control " name="latitude" id="latitude" required readonly>
                     </div>
 
                     <div class="mb-3">
                         <label for="" class="form-label">Longitude</label>
-                        <input type="text" class="form-control " name="longitude" id="longitude" required>
+                        <input type="text" class="form-control " name="longitude" id="longitude" required readonly>
                     </div>
 
                     <div class="mb-3">
@@ -115,7 +121,8 @@
 
                     <button type="submit" class="btn btn-primary" id="btn-present" disabled>Presence</button>
                 </form>
-                @endif
+                @endcan
+                {{-- --- AKHIR PERUBAHAN --- --}}
             </div>
         </div>
 
@@ -123,40 +130,43 @@
 </div>
 
 <script>
-    const iframe = document.querySelector('iframe');
+    // Pastikan script ini hanya berjalan jika form GPS ada
+    if (document.getElementById('latitude')) {
+        const iframe = document.querySelector('iframe');
+        const officeLat = -6.895505;
+        const officeLong = 107.613252;
+        const threshold = 0.1; // (Ini threshold yg besar, mungkin 0.001?)
 
-    const officeLat = -6.895505;
-    const officeLong = 107.613252;
-    const threshold = 0.1;
+        navigator.geolocation.getCurrentPosition(function(position) {
+            const lat = position.coords.latitude;
+            const long = position.coords.longitude;
+            iframe.src = `https://maps.google.com/maps?q=${lat},${long}&output=embed`;
+        });
 
-    navigator.geolocation.getCurrentPosition(function(position) {
-        const lat = position.coords.latitude;
-        const long = position.coords.longitude;
-        iframe.src = `https://maps.google.com/maps?q=${lat},${long}&output=embed`;
+        document.addEventListener('DOMContentLoaded', (event) => {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    const lat = position.coords.latitude;
+                    const long = position.coords.longitude;
 
-    });
+                    document.getElementById('latitude').value = lat;
+                    document.getElementById('longitude').value = long;
 
-    document.addEventListener('DOMContentLoaded', (event) => {
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(function(position) {
-                        const lat = position.coords.latitude;
-                        const long = position.coords.longitude;
+                    const distance = Math.sqrt(Math.pow(lat - officeLat, 2) + Math.pow(long - officeLong, 2));
 
-                        document.getElementById('latitude').value = lat;
-                        document.getElementById('longitude').value = long;
-
-                        const distance = Math.sqrt(Math.pow(lat - officeLat, 2) + Math.pow(long - officeLong, 2));
-
-                        if (distance <= threshold) {
-                            console.log('Kamu berada di Kantor, ayo bekerja');
-                            document.getElementById('btn-present').removeAttribute('disabled');
-                        } else {
-                            alert('Kamu tidak berada di kantor, tolong absen di kantor');
-                        }
-                    });
-                } else {
-                    console.log('Geolocation is not supported by this browser.');
-                }
-            });
+                    if (distance <= threshold) {
+                        console.log('Kamu berada di Kantor, ayo bekerja');
+                        document.getElementById('btn-present').removeAttribute('disabled');
+                    } else {
+                        // Jangan pakai alert(), ini mengganggu. Ganti ke console.
+                        console.error('Kamu tidak berada di kantor, tolong absen di kantor');
+                        // Kamu bisa tambahkan pesan error di HTML
+                    }
+                });
+            } else {
+                console.log('Geolocation is not supported by this browser.');
+            }
+        });
+    }
 </script>
 @endsection

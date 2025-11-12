@@ -50,9 +50,9 @@
                             <th>Start Date</th>
                             <th>End Date</th>
                             <th>Status</th>
-                            @if(session('role') == 'HR Manager')
+                            @can('leave_confirm_reject')
                             <th>Actions</th>
-                            @endif
+                            @endcan
                         </tr>
                     </thead>
                     <tbody>
@@ -71,22 +71,27 @@
                                 <span class="text-warning">{{ ucfirst($leaveRequest->status) }}</span>
                                 @endif
                             </td>
-                            <td>
-                                @if(session('role') == 'HR Manager')
-                                    @if($leaveRequest->status == 'pending' || $leaveRequest->status == 'reject')
-                                    <a href="{{ route('leave-requests.confirm', $leaveRequest->id) }}" class="btn btn-success btn-sm">Confirm</a>
-                                    @else
-                                    <a href="{{ route('leave-requests.reject', $leaveRequest->id) }}" class="btn btn-secondary btn-sm">Reject</a>
-                                    @endif
 
-                                    <a href="{{ route('leave-requests.edit', $leaveRequest->id) }}" class="btn btn-warning btn-sm">Edit</a>
-                                    <form action="{{ route('leave-requests.destroy', $leaveRequest->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this leave request?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                                    </form>
+                            @can('leave_confirm_reject')
+                            <td>
+                                @if($leaveRequest->status == 'pending' || $leaveRequest->status == 'rejected')
+                                <a href="{{ route('leave-requests.confirm', $leaveRequest->id) }}" class="btn btn-success btn-sm">Confirm</a>
+                                @else
+                                {{-- Ganti 'Reject' jadi 'Batalkan' (Cancel) jika sudah 'approved' --}}
+                                <a href="{{ route('leave-requests.reject', $leaveRequest->id) }}" class="btn btn-secondary btn-sm">Reject</a>
                                 @endif
+
+                                {{-- Logic untuk Edit/Delete (Hanya Admin) --}}
+                                <a href="{{ route('leave-requests.edit', $leaveRequest->id) }}" class="btn btn-warning btn-sm">Edit</a>
+                                <form action="{{ route('leave-requests.destroy', $leaveRequest->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this leave request?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                </form>
                             </td>
+                            @endcan
+                            {{-- --- Akhir Perubahan 2 --- --}}
+
                         </tr>
 
                         @endforeach

@@ -6,17 +6,28 @@ use App\Models\Employee;
 use App\Models\Presence;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Validator; 
+// --- PERUBAHAN 1: Tambahkan 'Auth' ---
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 
 class PresenceController extends Controller
 {
     public function index()
     {
-        if (session('position') == 'HR Manager') {
-            $presences = Presence::with('employee')->get();
+        // --- PERUBAHAN 2: Ganti logic 'session' ke 'Auth::user()->can()' ---
+        $query = Presence::with('employee');
+
+        // Cek Izin (Permission) Spatie, bukan Session!
+        // Izin 'presence_view_all' ini sudah kita set di web.php.
+        if (Auth::user()->can('presence_view_all')) {
+            // Kalau punya izin, dia bisa lihat semua (tidak perlu 'where')
         } else {
-            $presences = Presence::with('employee')->where('employee_id', session('employee_id'))->get();
+            // Kalau tidak punya izin, dia HANYA bisa lihat datanya sendiri
+            // (Kita pakai Auth::user()->employee_id yang JAUH LEBIH AMAN daripada session)
+            $query->where('employee_id', Auth::user()->employee_id);
         }
+
+        $presences = $query->get();
         return view('presences.index', compact('presences'));
     }
 
@@ -28,11 +39,15 @@ class PresenceController extends Controller
 
     public function store(Request $request)
     {
-        if (session('position') == 'HR Manager') {
+        // --- PERUBAHAN 3: Ganti logic 'session' ke 'Auth::user()->can()' ---
+        
+        // Cek Izin Spatie. Jika 'presence_view_all' (admin/HR), dia bisa input manual
+        if (Auth::user()->can('presence_view_all')) {
+            
             $validated = $request->validate([
                 'employee_id' => 'required|exists:employees,id',
-                'check_in' => 'nullable|date_format:Y-m-d H:i:s', 
-                'check_out' => 'nullable|date_format:Y-m-d H:i:s', 
+                'check_in' => 'nullable|date_format:Y-m-d H:i:s',
+                'check_out' => 'nullable|date_format:Y-m-d H:i:s',
                 'date' => 'required|date_format:Y-m-d',
                 'status' => 'required|in:present,absent,leave',
             ]);
@@ -43,12 +58,26 @@ class PresenceController extends Controller
             }
             
             Presence::create($validated);
+        
         } else {
+            // --- PERUBAHAN 4: Ini adalah logic untuk KARYAWAN BIASA (non-admin) ---
+            // Karyawan biasa HANYA bisa absen untuk diri sendiri (pakai GPS)
+
+            $validated = $request->validate([
+                 'latitude' => 'required',
+                 'longitude' => 'required',
+            ]);
+
+            // (Kamu bisa tambahkan validasi jarak GPS di sini jika perlu)
+
             Presence::create([
-                'employee_id' => session('employee_id'),
+                // Ambil ID dari Auth yang login, JANGAN dari session
+                'employee_id' => Auth::user()->employee_id, 
                 'check_in' => Carbon::now()->format('Y-m-d H:i:s'),
                 'date' => Carbon::now()->format('Y-m-d'),
                 'status' => 'present',
+                'latitude' => $validated['latitude'],
+                'longitude' => $validated['longitude'],
             ]);
         }
         
@@ -63,10 +92,11 @@ class PresenceController extends Controller
 
     public function update(Request $request, Presence $presence)
     {
+        // (Asumsi: Hanya yg punya 'presence_view_all' yg bisa 'update' - ini sudah diatur di web.php)
         $validated = $request->validate([
             'employee_id' => 'required|exists:employees,id',
-            'check_in' => 'nullable|date_format:Y-m-d H:i:s', 
-            'check_out' => 'nullable|date_format:Y-m-d H:i:s', 
+            'check_in' => 'nullable|date_format:Y-m-d H:i:s',
+            'check_out' => 'nullable|date_format:Y-m-d H:i:s',
             'date' => 'required|date_format:Y-m-d',
             'status' => 'required|in:present,absent,leave',
         ]);
