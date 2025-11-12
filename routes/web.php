@@ -6,7 +6,8 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\EmployeeController;
-use App\Http\Controllers\RoleController;
+// --- PERUBAHAN 1: Mengganti RoleController dengan PositionController ---
+use App\Http\Controllers\PositionController; 
 use App\Http\Controllers\PresenceController;
 use App\Http\Controllers\SalaryController;
 use App\Http\Controllers\LeaveRequestController;
@@ -24,6 +25,7 @@ Route::get('/', function () {
 Route::middleware('auth')->group(function () {
 
     // DAFTAR SEMUA ROLE AKTIF (SESUAI SEEDER)
+    // Ini adalah Hak Akses (Spatie Role), jadi ini sudah BENAR.
     $allActiveRoles = 'HR Manager,Developer,Supervisor,Accounting,Sales';
     $basicRoles = 'Developer,Supervisor,Accounting,Sales';
     $hrAccessRoles = 'HR Manager'; 
@@ -38,8 +40,6 @@ Route::middleware('auth')->group(function () {
     Route::resource('tasks', TaskController::class)
         ->only(['index', 'show', 'create', 'store', 'edit', 'update', 'destroy']);
     
-    // Pembatasan Akses CRUD Tasks menggunakan middleware 'permission' Spatie
-    // Note: Anda harus menjalankan 'php artisan migrate:fresh --seed' agar permissions terdaftar
     Route::middleware('permission:task_create')->group(function () {
         Route::get('/tasks/create', [TaskController::class, 'create'])->name('tasks.create');
         Route::post('/tasks', [TaskController::class, 'store'])->name('tasks.store');
@@ -60,8 +60,9 @@ Route::middleware('auth')->group(function () {
     // Department Module (HR Manager Only)
     Route::resource('departments', DepartmentController::class)->middleware(['role:HR Manager']);
 
-    // Role Module (HR Manager Only)
-    Route::resource('roles', RoleController::class)->middleware(['role:HR Manager']);
+    // --- PERUBAHAN 2: Mengganti 'roles' menjadi 'positions' dan 'RoleController' menjadi 'PositionController' ---
+    // Position Module (Jabatan) (HR Manager Only)
+    Route::resource('positions', PositionController::class)->middleware(['role:HR Manager']);
 
     // Presences Module 
     Route::resource('presences', PresenceController::class)->middleware(['role:HR Manager,Accounting,Supervisor']);

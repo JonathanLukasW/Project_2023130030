@@ -11,14 +11,14 @@
     <div class="page-title">
         <div class="row">
             <div class="col-12 col-md-6 order-md-1 order-last">
-                <h3>Roles</h3>
-                <p class="text-subtitle text-muted">Handle data role</p>
+                <h3>Positions</h3>
+                <p class="text-subtitle text-muted">Handle data position</p>
             </div>
             <div class="col-12 col-md-6 order-md-2 order-first">
                 <nav aria-label="breadcrumb" class="breadcrumb-header float-start float-lg-end">
                     <ol class="breadcrumb">
                         <li class="breadcrumb-item"><a href="index.html">Dashboard</a></li>
-                        <li class="breadcrumb-item"><a href="index.html">role</a></li>
+                        <li class="breadcrumb-item"><a href="index.html">Position</a></li>
                         <li class="breadcrumb-item active" aria-current="page">New</li>
                     </ol>
                 </nav>
@@ -34,14 +34,14 @@
             </div>
             <div class="card-body">
 
-                <form action="{{ route('roles.store')}}" method="POST">
-                    @csrf 
+                <form action="{{ route('positions.store')}}" method="POST">
+                    @csrf
 
                     <div class="mb-3">
                         <label for="" class="form-label">Title</label>
                         <input type="text" class="form-control" name="title" required>
-                        @error('name')
-                            <div class="invalid-feedback">{{ $message }}</div>
+                        @error('title')
+                        <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
 
@@ -49,12 +49,12 @@
                         <label for="" class="form-label">Description</label>
                         <textarea name="description" class="form-control @error('description') is-invalid @enderror"></textarea>
                         @error('description')
-                            <div class="invalid-feedback">{{ $message }}</div>
+                        <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
-                    
-                    <button type="submit" class="btn btn-primary">Create role</button>
-                    <a href="{{ route('roles.index') }}" class="btn btn-secondary">Back</a>
+
+                    <button type="submit" class="btn btn-primary">Create position</button>
+                    <a href="{{ route('positions.index') }}" class="btn btn-secondary">Back</a>
 
                 </form>
             </div>

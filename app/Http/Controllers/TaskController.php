@@ -9,24 +9,15 @@ use Illuminate\Support\Facades\Auth;
 
 class TaskController extends Controller
 {
-    /**
-     * Menampilkan daftar tugas dalam SATU tabel (dengan sorting Pending di atas).
-     */
     public function index()
     {
-        // 1. Tentukan Base Query (Otorisasi Scope Data)
         $baseQuery = Task::with('employee');
-
-        // Jika user tidak memiliki permission 'task_view_all', batasi data
         if (!Auth::user()->can('task_view_all')) {
-            // User hanya melihat tugas yang ditugaskan kepada mereka sendiri
             $baseQuery->where('assigned_to', Auth::user()->employee_id);
         }
 
-        // 2. Ambil SEMUA data tugas (Pending & Completed)
         $tasks = $baseQuery->get();
 
-        // 3. SORTING DI PHP COLLECTION (Pending di atas Completed)
         $tasks = $tasks->sortBy(fn ($task) => $task->status === 'pending' ? 1 : 2)->values();
         
         return view('tasks.index', compact('tasks'));
@@ -34,7 +25,6 @@ class TaskController extends Controller
 
     public function create()
     {
-        // Otorisasi dicek di Route, tetapi kita jaga-jaga di sini
         if (!Auth::user()->can('task_create')) {
             abort(403, 'Unauthorized action.');
         }
@@ -92,7 +82,6 @@ class TaskController extends Controller
 
     public function show(Task $task)
     {
-        // Otorisasi: Hanya user yang ditugaskan atau user dengan task_view_all yang boleh melihat
         if (!Auth::user()->can('task_view_all') && $task->assigned_to !== Auth::user()->employee_id) {
             abort(403, 'Unauthorized action.');
         }
@@ -101,7 +90,6 @@ class TaskController extends Controller
 
     public function done(int $id)
     {
-        // Otorisasi dicek di Route (task_mark_status)
         if (!Auth::user()->can('task_mark_status')) {
             abort(403, 'Unauthorized action.');
         }
@@ -113,7 +101,6 @@ class TaskController extends Controller
     
     public function pending(int $id)
     {
-        // Otorisasi dicek di Route (task_mark_status)
         if (!Auth::user()->can('task_mark_status')) {
             abort(403, 'Unauthorized action.');
         }

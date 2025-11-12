@@ -20,7 +20,9 @@ class HumanResourceSeeder extends Seeder
 
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
         DB::table('departments')->truncate();
-        DB::table('roles')->truncate();
+        // --- PERUBAHAN 1 ---
+        // Mengganti truncate 'roles' menjadi 'positions'
+        DB::table('positions')->truncate(); 
         DB::table('users')->truncate();
         DB::table('employees')->truncate();
         DB::table('tasks')->truncate();
@@ -67,7 +69,9 @@ class HumanResourceSeeder extends Seeder
             ],
         ]);
 
-        DB::table('roles')->insert([
+        // --- PERUBAHAN 2 ---
+        // Mengganti insert ke 'roles' menjadi 'positions'
+        DB::table('positions')->insert([
             [
                 'title' => 'HR Manager',
                 'description' => 'Manajer HR',
@@ -100,12 +104,14 @@ class HumanResourceSeeder extends Seeder
             ],
         ]);
 
+        // --- PERUBAHAN 3 ---
+        // Mengganti key 'role_id' menjadi 'position_id' di array data
         $employeesData = [
             [
                 'id' => 1,
                 'user_name' => 'Asep HR',
                 'user_email' => 'asephr@gmail.com',
-                'role_id' => 1,
+                'position_id' => 1, // <--- Diubah
                 'department_id' => 1,
                 'fullname' => 'Asep Santoso',
                 'status' => 'active',
@@ -113,10 +119,9 @@ class HumanResourceSeeder extends Seeder
             ],
             [
                 'id' => 2,
-                'user_name' =>
-                'Joko IT',
+                'user_name' => 'Joko IT',
                 'user_email' => 'jokoit@gmail.com',
-                'role_id' => 2,
+                'position_id' => 2, // <--- Diubah
                 'department_id' => 2,
                 'fullname' => 'Joko Pramono',
                 'status' => 'active',
@@ -126,7 +131,7 @@ class HumanResourceSeeder extends Seeder
                 'id' => 3,
                 'user_name' => 'Denis Sales',
                 'user_email' => 'denissales@gmail.com',
-                'role_id' => 3,
+                'position_id' => 3, // <--- Diubah
                 'department_id' => 3,
                 'fullname' => 'Denis Saputra',
                 'status' => 'active',
@@ -136,7 +141,7 @@ class HumanResourceSeeder extends Seeder
                 'id' => 4,
                 'user_name' => 'Bobby Finance',
                 'user_email' => 'bobbyfinance@gmail.com',
-                'role_id' => 4,
+                'position_id' => 4, // <--- Diubah
                 'department_id' => 4,
                 'fullname' => 'Bobby Karta',
                 'status' => 'active',
@@ -146,7 +151,7 @@ class HumanResourceSeeder extends Seeder
                 'id' => 5,
                 'user_name' => 'Udin Dev',
                 'user_email' => 'udin.dev@gmail.com',
-                'role_id' => 2,
+                'position_id' => 2, // <--- Diubah
                 'department_id' => 2,
                 'fullname' => 'Udin Wijaksono',
                 'status' => 'inactive',
@@ -165,7 +170,12 @@ class HumanResourceSeeder extends Seeder
                 'birth_date' => $faker->dateTimeBetween('-40 years', '-25 years'),
                 'hire_date' => $now->copy()->subMonths(rand(6, 60)),
                 'department_id' => $data['department_id'],
-                'role_id' => $data['role_id'],
+                
+                // --- PERUBAHAN 4 ---
+                // Mengganti kolom 'role_id' menjadi 'position_id'
+                // dan mengambil data dari key 'position_id'
+                'position_id' => $data['position_id'], // <--- Diubah
+                
                 'status' => $data['status'],
                 'salary' => $data['salary'],
                 'created_at' => $now,

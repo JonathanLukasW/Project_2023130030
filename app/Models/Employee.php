@@ -18,7 +18,7 @@ class Employee extends Model
         'birth_date',
         'hire_date',
         'department_id',
-        'role_id',
+        'position_id', 
         'status',
         'salary'
     ];
@@ -27,7 +27,7 @@ class Employee extends Model
         return $this->belongsTo(Department::class);
     }
 
-    public function role(){
-        return $this->belongsTo(Role::class);
+    public function position(){
+        return $this->belongsTo(Position::class, 'position_id');
     }
 }

@@ -50,8 +50,8 @@
                 </div>
 
                 <div class="mb-3">
-                    <label for="">Role</label>
-                    <p>{{ $employee->role->title }}</p>
+                    <label for="">Position</label>
+                    <p>{{ $employee->position->title }}</p>
                 </div>
 
 
@@ -77,7 +77,7 @@
                         @if($employee->status == 'active')
                             <span class="text-success">{{ ucfirst($employee->status) }}</span>
                         @else
-                            <span class="text-danger">{{ ucfirst($employee->status) }}</span>
+                            <span class="text-danger">{{ ucfirst($employee->stAAAAatus) }}</span>
                         @endif
                     </p>
                 </div>

@@ -48,7 +48,7 @@
                             <th>Fullname</th>
                             <th>Email</th>
                             <th>department_id</th>
-                            <th>role_id</th>
+                            <th>Position</th>
                             <th>status</th>
                             <th>salary</th>
                             <th>option</th>
@@ -60,7 +60,7 @@
                             <td>{{ $employee->fullname }}</td>
                             <td>{{ $employee->email}}</td>
                             <td>{{ $employee->department->name }}</td>
-                            <td>{{ $employee->role->title}}</td>
+                            <td>{{ $employee->position->title}}</td>
                             <td>
                                 @if($employee->status == 'active')
                                     <span class="text-success">{{ ucfirst($employee->status) }}</span>

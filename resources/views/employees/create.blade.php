@@ -101,14 +101,14 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="" class="form-label">Role</label>
-                        <select name="role_id" class="form-control @error('role_id') is-invalid @enderror">
-                            <option value="">Select Role</option>
-                            @foreach($roles as $role)
-                            <option value="{{ $role->id }}">{{ $role->title }}</option>
+                        <label for="" class="form-label">Position</label>
+                        <select name="position_id" class="form-control @error('position_id') is-invalid @enderror">
+                            <option value="">Select Position</option>
+                            @foreach($positions as $position)
+                            <option value="{{ $position->id }}">{{ $position->title }}</option>
                             @endforeach
                         </select>
-                        @error('role_id')
+                        @error('position_id')
                         <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>

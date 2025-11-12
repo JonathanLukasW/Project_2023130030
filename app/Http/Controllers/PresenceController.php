@@ -12,7 +12,7 @@ class PresenceController extends Controller
 {
     public function index()
     {
-        if (session('role') == 'HR Manager') {
+        if (session('position') == 'HR Manager') {
             $presences = Presence::with('employee')->get();
         } else {
             $presences = Presence::with('employee')->where('employee_id', session('employee_id'))->get();
@@ -28,7 +28,7 @@ class PresenceController extends Controller
 
     public function store(Request $request)
     {
-        if (session('role') == 'HR Manager') {
+        if (session('position') == 'HR Manager') {
             $validated = $request->validate([
                 'employee_id' => 'required|exists:employees,id',
                 'check_in' => 'nullable|date_format:Y-m-d H:i:s', 

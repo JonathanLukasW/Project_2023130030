@@ -5,33 +5,31 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Employee;
 use App\Models\Department;
-use App\Models\Role;
+use App\Models\Position;
 
 class EmployeeController extends Controller
 {
     public function index(){
-        $employees = Employee::all();
+        $employees = Employee::with(['department', 'position'])->get();
         return view('employees.index', compact('employees'));
     }
 
     public function create() {
         $departments = Department::all();
-        $roles = Role::all();
-
-        return view('employees.create', compact('departments', 'roles'));
+        $positions = Position::all();
+        return view('employees.create', compact('departments', 'positions'));
     }
 
     public function show($id){
-        $employee = Employee::findOrFail($id);
+        $employee = Employee::with(['department', 'position'])->findOrFail($id);
         return view('employees.show', compact('employee'));
     }
 
     public function edit($id){
         $employee = Employee::findOrFail($id);
         $departments = Department::all();
-        $roles = Role::all();
-
-        return view('employees.edit', compact('employee', 'departments', 'roles'));
+        $positions = Position::all();
+        return view('employees.edit', compact('employee', 'departments', 'positions'));
     }
 
     public function store(Request $request){
@@ -43,7 +41,7 @@ class EmployeeController extends Controller
             'birth_date' => 'required|date',
             'hire_date' => 'required|date',
             'department_id' => 'required',
-            'role_id' => 'required',
+            'position_id' => 'required',
             'status' => 'required|string',
             'salary' => 'required|numeric'
         ]);
@@ -63,7 +61,7 @@ class EmployeeController extends Controller
                 'birth_date' => 'required|date',
                 'hire_date' => 'required|date',
                 'department_id' => 'required',
-                'role_id' => 'required',
+                'position_id' => 'required',
                 'status' => 'required|string',
                 'salary' => 'required|numeric'
             ]);
@@ -79,5 +77,5 @@ class EmployeeController extends Controller
             $employee->delete();
 
             return redirect()->route('employees.index')->with('success', 'Employee deleted successfully');
-        }   
+        }  
 }

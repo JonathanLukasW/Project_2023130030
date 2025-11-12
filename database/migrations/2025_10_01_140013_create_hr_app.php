@@ -20,9 +20,11 @@ return new class extends Migration
             $table->softDeletes();
         });
 
-        Schema::create('roles', function (Blueprint $table) {
+        // 'roles' diganti menjadi 'positions' untuk menghindari konflik
+        // dengan tabel 'roles' dari package Spatie Permission.
+        Schema::create('positions', function (Blueprint $table) {
             $table->id();
-            $table->string('title');
+            $table->string('title'); // Ini adalah nama jabatan, mis: Manager, Staff
             $table->text('description')->nullable();
             $table->timestamps();
             $table->softDeletes();
@@ -37,7 +39,8 @@ return new class extends Migration
             $table->date('birth_date');
             $table->date('hire_date');
             $table->foreignId('department_id')->constrained('departments');
-            $table->foreignId('role_id')->constrained('roles');
+            $table->foreignId('position_id')->constrained('positions'); 
+            
             $table->string('status');
             $table->decimal('salary', 10, 2);
             $table->timestamps();
@@ -87,7 +90,7 @@ return new class extends Migration
             $table->string('status');
             $table->timestamps();
             $table->softDeletes();
-         });
+       });
     }
 
     /**
@@ -100,7 +103,7 @@ return new class extends Migration
         Schema::dropIfExists('salaries');
         Schema::dropIfExists('tasks');
         Schema::dropIfExists('employees');
-        Schema::dropIfExists('roles');
+        Schema::dropIfExists('positions'); // diganti dari 'roles'
         Schema::dropIfExists('departments');
     }
 };
