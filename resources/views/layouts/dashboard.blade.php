@@ -66,22 +66,12 @@
                     </div>
                 </div>
 
-                {{-- 
-                =====================================================================================
-                REVISI UTAMA DIMULAI DARI SINI
-                - Menghapus semua @if(session('role') == ...)
-                - Menghapus semua menu duplikat
-                - Mengganti semua logic dengan @can('nama_permission') dari Spatie
-                - Memperbaiki link 'roles' menjadi 'positions'
-                - Memperbaiki logic 'active' state pada menu (pakai wildcard *)
-                =====================================================================================
-                --}}
+                {{-- REVISI UTAMA DIMULAI DARI SINI --}}
                 <div class="sidebar-menu">
                     <ul class="menu">
                         <li class="sidebar-title">Menu</li>
 
                         {{-- 1. Dashboard --}}
-                        {{-- (Izin 'dashboard_view' dimiliki oleh semua role di seeder-mu) --}}
                         @can('dashboard_view')
                         <li class="sidebar-item {{ request()->is('dashboard') ? 'active' : '' }}">
                             <a href="{{ url('/dashboard') }}" class='sidebar-link'>
@@ -92,7 +82,6 @@
                         @endcan
 
                         {{-- 2. Tasks --}}
-                        {{-- (Izin 'task_view' dimiliki oleh semua role di seeder-mu) --}}
                         @can('task_view')
                         <li class="sidebar-item {{ request()->is('tasks*') ? 'active' : '' }}">
                             <a href="{{ url('/tasks') }}" class='sidebar-link'>
@@ -103,17 +92,16 @@
                         @endcan
 
                         {{-- 3. Grup Kepegawaian (Hanya muncul jika punya SALAH SATU izin di bawah) --}}
-                        @canany(['employee_manage', 'department_manage', 'role_manage'])
-                        <li class="sidebar-item has-sub {{ request()->is('employees*') || request()->is('departments*') || request()->is('positions*') ? 'active' : '' }}">
+                        {{-- (Kita tambahkan 'permission_manage' di sini biar grupnya "aktif") --}}
+                        @canany(['employee_manage', 'department_manage', 'position_manage', 'permission_manage'])
+                        <li class="sidebar-item has-sub {{ request()->is('employees*') || request()->is('departments*') || request()->is('positions*') || request()->is('manage-permissions*') ? 'active' : '' }}">
                             <a href="#" class='sidebar-link'>
                                 <i class="bi bi-people-fill"></i>
-                                <span>Kepegawaian</span>
+                                <span>Manajemen HR</span> {{-- (Judul diubah biar lebih pas) --}}
                             </a>
                             
-                            {{-- Cek class 'active' di <ul> agar submenu-nya langsung terbuka --}}
-                            <ul class="submenu {{ request()->is('employees*') || request()->is('departments*') || request()->is('positions*') ? 'active' : '' }}">
+                            <ul class="submenu {{ request()->is('employees*') || request()->is('departments*') || request()->is('positions*') || request()->is('manage-permissions*') ? 'active' : '' }}">
                                 
-                                {{-- Sub-menu dicek satu per satu --}}
                                 @can('employee_manage')
                                 <li class="submenu-item {{ request()->is('employees*') ? 'active' : '' }}">
                                     <a href="{{ url('/employees') }}" class="submenu-link">
@@ -131,22 +119,32 @@
                                 </li>
                                 @endcan
                                 
-                                @can('role_manage')
+                                {{-- (Ini pakai 'position_manage' dari "bonus" kita kemarin) --}}
+                                @can('position_manage')
                                 <li class="submenu-item {{ request()->is('positions*') ? 'active' : '' }}">
-                                    {{-- PERBAIKAN: Link dan Teks diubah dari 'roles' ke 'positions' --}}
                                     <a href="{{ url('/positions') }}" class="submenu-link">
                                         <i class="bi bi-person-fill"></i>
                                         <span>Positions</span>
                                     </a>
                                 </li>
                                 @endcan
+
+                                {{-- --- INI DIA MENU BARU KITA --- --}}
+                                @can('permission_manage')
+                                <li class="submenu-item {{ request()->is('manage-permissions*') ? 'active' : '' }}">
+                                    <a href="{{ route('permissions.index') }}" class="submenu-link">
+                                        <i class="bi bi-shield-lock-fill"></i>
+                                        <span>Permissions</span>
+                                    </a>
+                                </li>
+                                @endcan
+                                {{-- --- AKHIR MENU BARU --- --}}
                             </ul>
                         </li>
                         @endcanany
                         
 
                         {{-- 4. Grup Kehadiran --}}
-                        {{-- (Izin 'leave_manage' dan 'presence_create' dimiliki semua role) --}}
                         @canany(['presence_create', 'leave_manage'])
                         <li class="sidebar-item has-sub {{ request()->is('presences*') || request()->is('leave-requests*') ? 'active' : '' }}">
                             <a href="#" class='sidebar-link'>
@@ -174,7 +172,6 @@
                         @endcanany
 
                         {{-- 5. Salaries --}}
-                        {{-- (Izin 'salary_view_all' hanya dimiliki HR Manager di seeder-mu) --}}
                         @can('salary_view_all')
                         <li class="sidebar-item {{ request()->is('salaries*') ? 'active' : '' }}">
                             <a href="{{ url('/salaries') }}" class='sidebar-link'>
@@ -186,7 +183,6 @@
 
                         {{-- 6. Logout (Selalu tampil) --}}
                         <li class="sidebar-item">
-                            {{-- Ganti jadi route 'logout' dengan form POST agar lebih aman --}}
                             <a href="{{ route('logout') }}" class='sidebar-link' 
                                onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                                 <i class="bi bi-box-arrow-right"></i>
@@ -231,7 +227,8 @@
     <script src="{{ asset('template/dist/assets/static/js/pages/dashboard.js') }}"></script>
 
     <script src="{{ asset('template/dist/assets/extensions/simple-datatables/umd/simple-datatables.js') }}"></script>
-    <script src="{{ asset('template-dist/assets/static/js/pages/simple-datatables.js') }}"></script>
+    {{-- Path asset simple-datatables.js diperbaiki --}}
+    <script src="{{ asset('template/dist/assets/static/js/pages/simple-datatables.js') }}"></script>
 
     <!-- Need: chartJs -->
     <script src="{{ asset('template/dist/assets/extensions/chart.js/chart.umd.js') }}"></script>
