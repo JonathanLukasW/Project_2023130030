@@ -110,7 +110,7 @@ class HumanResourceSeeder extends Seeder
             [
                 'id' => 1,
                 'user_name' => 'Asep HR',
-                'user_email' => 'asephr@gmail.com',
+                'user_email' => 'kaztztl@gmail.com',
                 'position_id' => 1, // <--- Diubah
                 'department_id' => 1,
                 'fullname' => 'Asep Santoso',

@@ -68,10 +68,8 @@ return [
     ],
 
 
-    'fontsDirectory' => dirname(__DIR__) . '/vendor/mews/captcha/assets/fonts',
-    // 'fontsDirectory' => resource_path('assets/fonts'), 
+    'fontsDirectory' => dirname(__DIR__) . '/vendor/mews/captcha/assets/fonts', 
     'bgsDirectory' => dirname(__DIR__) . '/vendor/mews/captcha/assets/backgrounds',
-    // 'bgsDirectory' => resource_path('assets/bgs'),
     
 
     'default' => 'flat',
@@ -79,7 +77,7 @@ return [
     'cache' => ['store' => 'file', 'key' => 'captcha'],
 
     'flat' => [
-        'length' => 5,
+        'length' => 4,
         'fontColors' => ['#2c3e50', '#c0392b', '#16a085', '#c0392b', '#8e44ad', '#303f9f', '#f57c00', '#795548'],
         'width' => 120,
         'height' => 36,
@@ -89,11 +87,10 @@ return [
         'bgImage' => false,
         'bgColor' => '#F3F4F6',
         'contrast' => 0,
-        // Hapus 'type' => 'math',
     ],
 
     'math' => [
-        'length' => 5,
+        'length' => 4,
         'fontColors' => ['#2c3e50', '#c0392b', '#16a085', '#c0392b', '#8e44ad', '#303f9f', '#f57c00', '#795548'],
         'width' => 120,
         'height' => 36,
