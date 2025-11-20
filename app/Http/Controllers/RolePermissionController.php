@@ -37,11 +37,8 @@ class RolePermissionController extends Controller
             $roleIds = Role::where('name', '!=', 'HR Manager')->pluck('id');
 
             foreach ($roleIds as $roleId) {
-                // 1. Ambil data Role-nya
                 $role = Role::findById($roleId);
                 
-                // 2. Ambil daftar izin (dari checkbox) yang dikirim dari form
-                // Jika tidak ada izin yang dicentang untuk role ini, $permissions akan jadi array kosong []
                 $permissions = $request->input('permissions.' . $roleId, []);
 
                 $role->syncPermissions($permissions);
