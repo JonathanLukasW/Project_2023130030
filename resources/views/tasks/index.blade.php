@@ -33,7 +33,7 @@
             <div class="card-body">
 
                 <div class="d-flex">
-                    @can('task_create') {{-- Pengecekan Spatie untuk tombol New Task --}}
+                    @can('task_create')
                     <a href="{{ route('tasks.create')}}" class="btn btn-primary mb-3 ms-auto">New Task</a>
                     @endcan
                 </div>
@@ -69,10 +69,8 @@
                                     @endif
                                 </td>
                                 <td>
-                                    {{-- Tombol View --}}
                                     <a href="{{ route('tasks.show', $task->id) }}" class="btn btn-info btn-sm">View</a>
 
-                                    {{-- Tombol Mark Status (task_mark_status) --}}
                                     @can('task_mark_status')
                                         @if($task->status == 'pending')
                                         <a href="{{ route('tasks.done', $task->id) }}" class="btn btn-success btn-sm">Mark as Done</a>
@@ -81,7 +79,6 @@
                                         @endif
                                     @endcan
 
-                                    {{-- Tombol Edit/Delete (task_edit, task_delete) --}}
                                     @can('task_edit')
                                     <a href="{{ route('tasks.edit', $task->id) }}" class="btn btn-warning btn-sm">Edit</a>
                                     @endcan
@@ -105,7 +102,6 @@
     </section>
 </div>
 
-{{-- SCRIPT INISIALISASI DATATABLES --}}
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -118,3 +114,5 @@
         }
     });
 </script>
+@endpush
+@endsection

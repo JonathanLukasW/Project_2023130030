@@ -19,15 +19,21 @@ class DashboardController extends Controller
         $department = Department::count();
         $salary = Salary::count();
         $presence = Presence::count();
-        $tasks = Task::all();
+        
+        // Mengambil tugas untuk ditampilkan di tabel ringkasan
+        $tasks = Task::with('employee')->limit(5)->get(); 
 
         return view('dashboard.index', compact('employee', 'department', 'salary', 'presence', 'tasks'));
     }
 
+    /**
+     * MENGEMBALIKAN FUNGSI PRESENCE (AJAX endpoint untuk Chart.js).
+     */
     public function presence()
     {
         $targetYear = 2025; 
         
+        // Query untuk mengambil total kehadiran per bulan
         $rawMonthlyData = DB::select("
             SELECT MONTH(date) as month, COUNT(*) as total
             FROM presences

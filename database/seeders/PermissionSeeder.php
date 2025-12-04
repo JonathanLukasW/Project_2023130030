@@ -10,66 +10,67 @@ use App\Models\Employee;
 
 class PermissionSeeder extends Seeder
 {
-    public function run(): void
+   public function run(): void
     {
+        // 1. Hapus Cache Permission Spatie (Wajib)
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
+        // --- DAFTAR SEMUA IZIN RESMI ---
         $permissions = [
             'dashboard_view',
-            'task_view', 'task_create', 'task_edit', 'task_delete', 'task_mark_status',
+            'task_view', 
+            'task_manage', // Izin View All/Manage ada
+            'task_create', 'task_edit', 'task_delete', 'task_mark_status',
             'employee_view', 'employee_manage', 
             'department_manage', 
-            
-            // --- PERUBAHAN 1: Ganti 'role_manage' jadi 'position_manage' ---
-            'position_manage', // (Ini dari "bonus" kita kemarin)
-
+            'position_manage', 
             'presence_view_all', 'presence_create',
             'salary_view_all',
             'leave_manage', 'leave_confirm_reject',
-
-            // --- PERUBAHAN 2: Tambahkan Izin Baru untuk halaman baru kita ---
-            'permission_manage', // (Izin untuk mengelola halaman Izin)
+            'permission_manage', 
         ];
 
+        // 2. Buat semua izin yang ada di array
         foreach ($permissions as $permission) {
             Permission::firstOrCreate(['name' => $permission]);
         }
+        
+        // 3. AMBIL SEMUA IZIN YANG ADA DI DATABASE
+        $allPermissions = Permission::all();
+        
 
         $hrManagerRole = Role::firstOrCreate(['name' => 'HR Manager']);
-        // --- PERUBAHAN 3: Kasih SEMUA izin ke HR Manager (termasuk yg baru) ---
-        $hrManagerRole->givePermissionTo(Permission::all());
+        // 4. HR Manager mendapatkan SEMUA Izin yang sudah terdaftar
+        // Kita pakai syncPermissions untuk memastikan tidak ada yang terlewat
+        $hrManagerRole->syncPermissions($allPermissions); 
 
+        // 5. Sinkronisasi Role Karyawan Lain (Ini penting untuk membatasi mereka)
+        
         $developerRole = Role::firstOrCreate(['name' => 'Developer']);
-        $developerRole->givePermissionTo(['dashboard_view', 'task_view', 'task_mark_status', 'presence_create', 'leave_manage']);
+        $developerRole->syncPermissions(['dashboard_view', 'task_view', 'task_mark_status', 'presence_create', 'leave_manage']);
 
-        // --- PERUBAHAN 4 (Saran): Kita bikin 3 Role baru sesuai Seeder Jabatan ---
         $salesRole = Role::firstOrCreate(['name' => 'Sales']);
-        $salesRole->givePermissionTo(['dashboard_view', 'task_view', 'task_mark_status', 'presence_create', 'leave_manage']);
+        $salesRole->syncPermissions(['dashboard_view', 'task_view', 'task_mark_status', 'presence_create', 'leave_manage']);
 
         $accountingRole = Role::firstOrCreate(['name' => 'Accounting']);
-        $accountingRole->givePermissionTo(['dashboard_view', 'task_view', 'task_mark_status', 'presence_create', 'leave_manage', 'salary_view_all', 'presence_view_all']);
+        $accountingRole->syncPermissions(['dashboard_view', 'task_view', 'task_mark_status', 'presence_create', 'leave_manage', 'salary_view_all', 'presence_view_all']);
 
         $supervisorRole = Role::firstOrCreate(['name' => 'Supervisor']);
-        $supervisorRole->givePermissionTo(['dashboard_view', 'task_view', 'task_mark_status', 'presence_create', 'leave_manage', 'leave_confirm_reject']);
+        $supervisorRole->syncPermissions(['dashboard_view', 'task_view', 'task_mark_status', 'presence_create', 'leave_manage', 'leave_confirm_reject']);
 
-
-        // --- Menghubungkan User ke Role ---
-        // (Pastikan ID User cocok dengan Seeder HR)
-        $asep = User::find(1); // Asep (HR Manager)
+        $asep = User::find(1); 
         if ($asep) $asep->assignRole($hrManagerRole);
         
-        $joko = User::find(2); // Joko (Developer)
+        $joko = User::find(2); 
         if ($joko) $joko->assignRole($developerRole);
 
-        $denis = User::find(3); // Denis (Sales)
-        if ($denis) $denis->assignRole($salesRole); // <-- Diperbarui
+        $denis = User::find(3); 
+        if ($denis) $denis->assignRole($salesRole); 
 
-        $bobby = User::find(4); // Bobby (Accounting)
-        if ($bobby) $bobby->assignRole($accountingRole); // <-- Diperbarui
+        $bobby = User::find(4); 
+        if ($bobby) $bobby->assignRole($accountingRole); 
 
-        $udin = User::find(5); // Udin (Developer)
+        $udin = User::find(5); 
         if ($udin) $udin->assignRole($developerRole);
-        
-        // (Kita belum punya user 'Supervisor', tapi Role-nya sudah siap)
     }
 }

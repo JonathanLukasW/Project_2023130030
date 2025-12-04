@@ -34,8 +34,18 @@
             </div>
             <div class="card-body">
 
-                <div class="d-flex">
-                    <a href="{{ route('employees.create')}}" class="btn btn-primary mb-3 ms-auto">New employee</a>
+                {{-- PERUBAHAN: TAMBAH TOMBOL EXPORT --}}
+                <div class="d-flex justify-content-between">
+                    {{-- TOMBOL EXPORT BARU --}}
+                    @can('employee_manage')
+                    <a href="{{ route('export.employees') }}" class="btn btn-success mb-3 me-2">
+                        <i class="bi bi-file-earmark-excel"></i> Export Excel
+                    </a>
+                    @endcan
+                    {{-- TOMBOL CREATE LAMA --}}
+                    @can('employee_manage')
+                    <a href="{{ route('employees.create')}}" class="btn btn-primary mb-3">New employee</a>
+                    @endcan
                 </div>
 
                 @if(session('success'))

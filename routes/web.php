@@ -10,8 +10,8 @@ use App\Http\Controllers\PositionController;
 use App\Http\Controllers\PresenceController;
 use App\Http\Controllers\SalaryController;
 use App\Http\Controllers\LeaveRequestController;
-// --- (BARU) Import Controller Izin (Permission) kita ---
 use App\Http\Controllers\RolePermissionController;
+use App\Http\Controllers\ExportController; // <-- BARIS INI DITAMBAHKAN
 
 Route::get('captcha-image', function () {
     return captcha_img('flat');
@@ -23,12 +23,21 @@ Route::get('/', function () {
 
 Route::middleware('auth')->group(function () {
 
+    // --- DASHBOARD ROUTES ---
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard')->middleware(['permission:dashboard_view']);
-    Route::get('/dashboard/presence', [DashboardController::class, 'presence']);
+    Route::get('/dashboard/presence', [DashboardController::class, 'presence']); 
+    
+    // --- TASK CALENDAR DATA ROUTE (Dipakai oleh Dashboard Index) ---
+    Route::get('/tasks/events', [TaskController::class, 'getEvents'])->name('tasks.events'); 
 
-    Route::resource('tasks', TaskController::class)
-        ->only(['index', 'show', 'create', 'store', 'edit', 'update', 'destroy']);
-
+    // --- EXPORT ROUTES (BARU DITAMBAHKAN) ---
+    // Hanya user dengan izin 'employee_manage' (HR Manager) yang boleh export data karyawan
+    Route::get('/export/employees', [ExportController::class, 'exportEmployees'])->name('export.employees')->middleware(['permission:employee_manage']);
+    // Hanya user dengan izin 'presence_view_all' (HR Manager/Accounting) yang boleh export data kehadiran
+    Route::get('/export/presences', [ExportController::class, 'exportPresences'])->name('export.presences')->middleware(['permission:presence_view_all']);
+    
+    // --- TASK CRUD ROUTES ---
+    Route::resource('tasks', TaskController::class)->only(['index', 'show']);
     Route::middleware('permission:task_create')->group(function () {
         Route::get('/tasks/create', [TaskController::class, 'create'])->name('tasks.create');
         Route::post('/tasks', [TaskController::class, 'store'])->name('tasks.store');
@@ -41,15 +50,14 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/tasks/done/{id}', [TaskController::class, 'done'])->name('tasks.done')->middleware(['permission:task_mark_status']);
     Route::get('/tasks/pending/{id}', [TaskController::class, 'pending'])->name('tasks.pending')->middleware(['permission:task_mark_status']);
+    // --- END: Task Routes ---
 
+    // Rute Modul HR lainnya (Tidak diubah)
     Route::resource('employees', EmployeeController::class)->middleware(['permission:employee_manage']);
-
     Route::resource('departments', DepartmentController::class)->middleware(['permission:department_manage']);
-
-    // (Ini sudah benar, pakai izin 'position_manage' dari "bonus" kita kemarin)
     Route::resource('positions', PositionController::class)->middleware(['permission:position_manage']);
 
-    // (Rute Presences yang sudah dipecah)
+    // Rute Presences yang sudah dipecah (Tidak diubah)
     Route::get('presences/create', [PresenceController::class, 'create'])->name('presences.create')->middleware(['permission:presence_create']);
     Route::post('presences', [PresenceController::class, 'store'])->name('presences.store')->middleware(['permission:presence_create']);
     Route::get('presences', [PresenceController::class, 'index'])->name('presences.index')->middleware(['permission:presence_view_all']);
@@ -57,7 +65,7 @@ Route::middleware('auth')->group(function () {
     Route::put('presences/{presence}', [PresenceController::class, 'update'])->name('presences.update')->middleware(['permission:presence_view_all']);
     Route::delete('presences/{presence}', [PresenceController::class, 'destroy'])->name('presences.destroy')->middleware(['permission:presence_view_all']);
 
-    // (Rute Salaries yang sudah dipecah)
+    // Rute Salaries yang sudah dipecah (Tidak diubah)
     Route::get('salaries', [SalaryController::class, 'index'])->name('salaries.index')->middleware(['permission:leave_manage']);
     Route::get('salaries/{salary}', [SalaryController::class, 'show'])->name('salaries.show')->middleware(['permission:leave_manage']);
     Route::get('salaries/create', [SalaryController::class, 'create'])->name('salaries.create')->middleware(['permission:salary_view_all']);
@@ -75,7 +83,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/manage-permissions', 'index')->name('permissions.index');
         Route::post('/manage-permissions', 'update')->name('permissions.update'); 
     });
-
 
     // (Rute Profile)
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

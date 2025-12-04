@@ -34,8 +34,18 @@
             </div>
             <div class="card-body">
 
-                <div class="d-flex">
+                {{-- PERUBAHAN: TAMBAH TOMBOL EXPORT --}}
+                <div class="d-flex justify-content-between">
+                    {{-- TOMBOL EXPORT BARU (Hanya untuk Admin/HR) --}}
+                    @can('presence_view_all')
+                    <a href="{{ route('export.presences') }}" class="btn btn-success mb-3 me-2">
+                        <i class="bi bi-file-earmark-excel"></i> Export Excel
+                    </a>
+                    @endcan
+                    {{-- TOMBOL CREATE LAMA (Hanya untuk Karyawan) --}}
+                    @can('presence_create')
                     <a href="{{ route('presences.create')}}" class="btn btn-primary mb-3 ms-auto">New Presence</a>
+                    @endcan
                 </div>
 
                 @if(session('success'))
@@ -50,7 +60,7 @@
                             <th>Check out</th>
                             <th>Date</th>
                             <th>Status</th>
-                        
+                            
                             @can('presence_view_all')
                             <th>Actions</th>
                             @endcan
