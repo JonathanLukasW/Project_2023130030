@@ -30,127 +30,32 @@ class HumanResourceSeeder extends Seeder
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
         DB::table('departments')->insert([
-            [
-                'name' => 'Human Resources',
-                'description' => 'Manajemen SDM',
-                'status' => 'active',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Technology',
-                'description' => 'Departemen IT & Tech',
-                'status' => 'active',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Sales & Marketing',
-                'description' => 'Pemasaran dan Penjualan',
-                'status' => 'active',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Finance & Accounting',
-                'description' => 'Keuangan dan Akuntansi',
-                'status' => 'active',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Operation',
-                'description' => 'Operasional Bisnis',
-                'status' => 'active',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
+            ['name' => 'Human Resources', 'description' => 'Manajemen SDM', 'status' => 'active', 'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'Technology', 'description' => 'Departemen IT & Tech', 'status' => 'active', 'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'Sales & Marketing', 'description' => 'Pemasaran dan Penjualan', 'status' => 'active', 'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'Finance & Accounting', 'description' => 'Keuangan dan Akuntansi', 'status' => 'active', 'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'Operation', 'description' => 'Operasional Bisnis', 'status' => 'active', 'created_at' => now(), 'updated_at' => now()],
         ]);
 
         DB::table('positions')->insert([
-            [
-                'title' => 'HR Manager',
-                'description' => 'Manajer HR',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'title' => 'Developer',
-                'description' => 'Pengembang Kode',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'title' => 'Sales',
-                'description' => 'Penjualan',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'title' => 'Accounting',
-                'description' => 'Staf Keuangan',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'title' => 'Supervisor',
-                'description' => 'Supervisor Operasional',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
+            ['title' => 'HR Manager', 'description' => 'Manajer HR', 'created_at' => now(), 'updated_at' => now()],
+            ['title' => 'Developer', 'description' => 'Pengembang Kode', 'created_at' => now(), 'updated_at' => now()],
+            ['title' => 'Sales', 'description' => 'Penjualan', 'created_at' => now(), 'updated_at' => now()],
+            ['title' => 'Accounting', 'description' => 'Staf Keuangan', 'created_at' => now(), 'updated_at' => now()],
+            ['title' => 'Supervisor', 'description' => 'Supervisor Operasional', 'created_at' => now(), 'updated_at' => now()],
         ]);
 
         $employeesData = [
-            [
-                'id' => 1,
-                'user_name' => 'Asep HR',
-                'user_email' => 'kaztztl@gmail.com',
-                'position_id' => 1, 
-                'department_id' => 1,
-                'fullname' => 'Asep Santoso',
-                'status' => 'active',
-                'salary' => 12500000.00
-            ],
-            [
-                'id' => 2,
-                'user_name' => 'Joko IT',
-                'user_email' => 'jokoit@gmail.com',
-                'position_id' => 2, 
-                'department_id' => 2,
-                'fullname' => 'Joko Pramono',
-                'status' => 'active',
-                'salary' => 15000000.00
-            ],
-            [
-                'id' => 3,
-                'user_name' => 'Denis Sales',
-                'user_email' => 'denissales@gmail.com',
-                'position_id' => 3, 
-                'department_id' => 3,
-                'fullname' => 'Denis Saputra',
-                'status' => 'active',
-                'salary' => 9500000.00
-            ],
-            [
-                'id' => 4,
-                'user_name' => 'Bobby Finance',
-                'user_email' => 'bobbyfinance@gmail.com',
-                'position_id' => 4, 
-                'department_id' => 4,
-                'fullname' => 'Bobby Karta',
-                'status' => 'active',
-                'salary' => 8000000.00
-            ],
-            [
-                'id' => 5,
-                'user_name' => 'Udin Dev',
-                'user_email' => 'udin.dev@gmail.com',
-                'position_id' => 2, 
-                'department_id' => 2,
-                'fullname' => 'Udin Wijaksono',
-                'status' => 'inactive',
-                'salary' => 11000000.00
-            ],
+            // HR Manager
+            ['id' => 1, 'user_name' => 'Asep HR', 'user_email' => 'kaztztl@gmail.com', 'position_id' => 1, 'department_id' => 1, 'fullname' => 'Asep Santoso', 'status' => 'active', 'salary' => 12500000.00],
+            // Developer
+            ['id' => 2, 'user_name' => 'Joko IT', 'user_email' => 'jokoit@gmail.com', 'position_id' => 2, 'department_id' => 2, 'fullname' => 'Joko Pramono', 'status' => 'active', 'salary' => 15000000.00],
+            // Sales
+            ['id' => 3, 'user_name' => 'Denis Sales', 'user_email' => 'denissales@gmail.com', 'position_id' => 3, 'department_id' => 3, 'fullname' => 'Denis Saputra', 'status' => 'active', 'salary' => 9500000.00],
+            // Accounting
+            ['id' => 4, 'user_name' => 'Bobby Finance', 'user_email' => 'bobbyfinance@gmail.com', 'position_id' => 4, 'department_id' => 4, 'fullname' => 'Bobby Karta', 'status' => 'active', 'salary' => 8000000.00],
+            // Inactive / Test User
+            ['id' => 5, 'user_name' => 'Udin Dev', 'user_email' => 'udin.dev@gmail.com', 'position_id' => 2, 'department_id' => 2, 'fullname' => 'Udin Wijaksono', 'status' => 'inactive', 'salary' => 11000000.00],
         ];
 
         foreach ($employeesData as $data) {
@@ -164,12 +69,7 @@ class HumanResourceSeeder extends Seeder
                 'birth_date' => $faker->dateTimeBetween('-40 years', '-25 years'),
                 'hire_date' => $now->copy()->subMonths(rand(6, 60)),
                 'department_id' => $data['department_id'],
-                
-                // --- PERUBAHAN 4 ---
-                // Mengganti kolom 'role_id' menjadi 'position_id'
-                // dan mengambil data dari key 'position_id'
                 'position_id' => $data['position_id'], 
-                
                 'status' => $data['status'],
                 'salary' => $data['salary'],
                 'created_at' => $now,
@@ -189,7 +89,51 @@ class HumanResourceSeeder extends Seeder
 
         $employeeIds = [1, 2, 3, 4, 5];
         $activeEmployeeIds = [1, 2, 3, 4];
-        $numPresencesPerEmployee = 20;
+        $year = 2025;
+        $now = now();
+
+        // --- PRESENCES (Lebih Bervariasi) ---
+        foreach ($activeEmployeeIds as $id) {
+            for ($month = 1; $month <= 12; $month++) {
+                $daysInMonth = Carbon::create($year, $month, 1)->daysInMonth;
+                for ($day = 1; $day <= $daysInMonth; $day++) {
+                    $date = Carbon::create($year, $month, $day);
+
+                    if (!$date->isWeekday()) continue;
+
+                    $statusOptions = ['present', 'present', 'present', 'absent', 'leave']; // 3/5 hadir
+                    $status = $statusOptions[array_rand($statusOptions)];
+
+                    $checkIn = null;
+                    $checkOut = null;
+                    $latitude = null;
+                    $longitude = null;
+
+                    if ($status == 'present') {
+                        $checkIn = $date->copy()->setTime(8, rand(0, 15), 0);
+                        $checkOut = $date->copy()->setTime(17, rand(0, 30), 0);
+                        // Dummy GPS for testing presence logic
+                        $latitude = $faker->latitude(-6.89, -6.90); 
+                        $longitude = $faker->longitude(107.61, 107.62); 
+                    }
+                    
+                    if ($status != 'present' && rand(1, 100) > 80) continue; // Skip beberapa absen/cuti agar data tidak terlalu padat
+
+                    DB::table('presences')->insert([
+                        'employee_id' => $id,
+                        'date' => $date->format('Y-m-d'),
+                        'check_in' => $checkIn,
+                        'check_out' => $checkOut,
+                        'status' => $status,
+                        'latitude' => $latitude,
+                        'longitude' => $longitude,
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ]);
+                }
+            }
+        }
+        // -------------------------------------
 
         DB::table('tasks')->insert([
             [
@@ -255,32 +199,6 @@ class HumanResourceSeeder extends Seeder
                 'created_at' => $now,
                 'updated_at' => $now,
             ]);
-        }
-
-        $year = 2025;
-
-        foreach ($employeeIds as $id) {
-            if (in_array($id, $activeEmployeeIds)) {
-                for ($j = 0; $j < $numPresencesPerEmployee; $j++) {
-                    $randomMonth = rand(1, 12);
-                    $daysInMonth = Carbon::create($year, $randomMonth, 1)->daysInMonth;
-                    $randomDay = rand(1, $daysInMonth);
-                    $date = Carbon::create($year, $randomMonth, $randomDay);
-
-                    if (!$date->isWeekday()) continue;
-
-                    $now = now();
-                    DB::table('presences')->insert([
-                        'employee_id' => $id,
-                        'date' => $date,
-                        'check_in' => $date->copy()->setTime(8, rand(0, 15), 0),
-                        'check_out' => $date->copy()->setTime(17, rand(0, 30), 0),
-                        'status' => 'present',
-                        'created_at' => $now,
-                        'updated_at' => $now,
-                    ]);
-                }
-            }
         }
 
         DB::table('leave_requests')->insert([
