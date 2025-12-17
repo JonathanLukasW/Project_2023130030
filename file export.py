@@ -1,9 +1,7 @@
 import os
 
 folders = [
-    "app/Models",
-    "app/Http/Controllers",
-	"app/Http/Requests",
+    "app",
 	"bootstrap",
     "resources/views",
     "routes",

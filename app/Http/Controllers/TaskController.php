@@ -6,6 +6,13 @@ use App\Models\Employee;
 use Illuminate\Http\Request;
 use App\Models\Task;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Department;
+use App\Models\Salary;
+use App\Models\Presence;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\NewTaskNotification;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;      // <-- FIXED: Import Log Facade
 
 class TaskController extends Controller
 {
@@ -13,8 +20,6 @@ class TaskController extends Controller
     {
         $baseQuery = Task::with('employee');
         
-        // Jika user TIDAK punya izin 'task_manage' (Karyawan biasa),
-        // maka data tugas DIBATASI HANYA yang ditugaskan ke dia.
         if (!Auth::user()->can('task_manage')) { 
             if (Auth::check() && Auth::user()->employee_id) {
                  $baseQuery->where('assigned_to', Auth::user()->employee_id);
@@ -29,22 +34,21 @@ class TaskController extends Controller
         
         return view('tasks.index', compact('tasks'));
     }
-    
-    // --- FUNGSI BARU: Untuk Mengambil Data Events JSON Kalender ---
+
     public function getEvents(Request $request)
     {
-        $events = $this->getCalendarEvents();
+        $isPersonalRequest = $request->has('personal') && Auth::check() && !Auth::user()->can('task_manage');
+
+        $events = $this->getCalendarEvents($isPersonalRequest);
         
         return response()->json($events);
     }
     
-    // --- FUNGSI PRIVAT PEMBANTU (Helper) ---
-    private function getCalendarEvents()
+    private function getCalendarEvents(bool $isPersonal = false)
     {
         $query = Task::query();
-
-        // Terapkan Logic Pembatasan Akses
-        if (!Auth::user()->can('task_manage')) { 
+        
+        if ($isPersonal || !Auth::user()->can('task_manage')) { 
             if (Auth::check() && Auth::user()->employee_id) {
                  $query->where('assigned_to', Auth::user()->employee_id);
             } else {
@@ -59,14 +63,15 @@ class TaskController extends Controller
             $events[] = [
                 'date' => $task->due_date, 
                 'title' => $task->title,
-                'url' => route('tasks.show', $task->id),
+                // Menggunakan helper encodeId()
+                'url' => route('tasks.show', encodeId($task->id)), 
                 'color' => $this->getEventColor($task->status), 
             ];
         }
         
         return $events;
     }
-
+    
     private function getEventColor($status)
     {
         return match ($status) {
@@ -75,8 +80,7 @@ class TaskController extends Controller
             default => '#6c757d', 
         };
     }
-    // --- AKHIR FUNGSI BARU ---
-
+    
     public function create()
     {
         if (!Auth::user()->can('task_create')) {
@@ -86,5 +90,108 @@ class TaskController extends Controller
         $employees = Employee::all();
         return view('tasks.create', compact('employees'));
     }
-    // ... (Fungsi store, edit, update, show, destroy, done, pending TIDAK DIUBAH)
+
+    public function store(Request $request)
+    {
+        if (!Auth::user()->can('task_create')) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'assigned_to' => 'required|exists:employees,id',
+            'due_date' => 'required|date_format:Y-m-d\TH:i', 
+            'status' => 'required|string'
+        ]);
+
+        $validated['due_date'] = Carbon::createFromFormat('Y-m-d\TH:i', $validated['due_date'])->format('Y-m-d H:i:s');
+        
+        $task = Task::create($validated);
+
+        try {
+            // Mail::send(new NewTaskNotification($task));
+        } catch (\Exception $e) {
+             Log::error('Gagal mengirim notifikasi tugas baru: ' . $e->getMessage()); // <-- FIXED: Tanpa backslash
+        }
+
+        return redirect()->route('tasks.index')->with('success', 'Task created successfully.');
+    }
+
+    public function edit(Task $task)
+    {
+        if (!Auth::user()->can('task_edit')) {
+            abort(403, 'Unauthorized action.');
+        }
+        
+        $employees = Employee::all();
+        return view('tasks.edit', compact('task', 'employees'));
+    }
+
+    public function update(Request $request, Task $task)
+    {
+        if (!Auth::user()->can('task_edit')) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'assigned_to' => 'required|exists:employees,id',
+            'due_date' => 'required|date_format:Y-m-d\TH:i',
+            'status' => 'required|string'
+        ]);
+        
+        $validated['due_date'] = Carbon::createFromFormat('Y-m-d\TH:i', $validated['due_date'])->format('Y-m-d H:i:s');
+
+        $task->update($validated);
+        return redirect()->route('tasks.index')->with('success', 'Task updated successfully.');
+    }
+
+    public function show(string $encodedId)
+    {
+        // POIN 8: Dekripsi ID
+        $taskId = decodeId($encodedId);
+        if (!$taskId) {
+            abort(404, 'Task not found.');
+        }
+        $task = Task::findOrFail($taskId);
+        
+        if (!Auth::user()->can('task_manage') && $task->assigned_to !== Auth::user()->employee_id) {
+            abort(403, 'Unauthorized action.');
+        }
+        return view('tasks.show', compact('task'));
+    }
+
+    public function done(int $id)
+    {
+        if (!Auth::user()->can('task_mark_status')) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $task = Task::findOrFail($id);
+        $task->update(['status' => 'completed']);
+        return redirect()->route('tasks.index')->with('success', 'Task marked as done successfully');
+    }
+    
+    public function pending(int $id)
+    {
+        if (!Auth::user()->can('task_mark_status')) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $task = Task::findOrFail($id);
+        $task->update(['status' => 'pending']);
+        return redirect()->route('tasks.index')->with('success', 'Task marked as pending successfully');
+    }
+
+    public function destroy(Task $task)
+    {
+        if (!Auth::user()->can('task_delete')) {
+            abort(403, 'Unauthorized action.');
+        }
+        
+        $task->delete();
+        return redirect()->route('tasks.index')->with('success', 'Task deleted successfully.');
+    }
 }

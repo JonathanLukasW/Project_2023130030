@@ -1,232 +1,41 @@
 
 
-=== FILE: app/Models\Department.php ===
+=== FILE: app\Helpers\UrlHelper.php ===
 
 <?php
 
-namespace App\Models;
+use Illuminate\Support\Facades\Crypt;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\SoftDeletes;
-
-class Department extends Model
-{
-    use HasFactory, SoftDeletes;
-
-    protected $fillable = ['name', 'description', 'status'];
-}
-
-
-=== FILE: app/Models\Employee.php ===
-
-<?php
-
-namespace App\Models;
-
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\SoftDeletes;
-
-class Employee extends Model
-{
-    use HasFactory, SoftDeletes;
-
-    protected $fillable = [
-        'fullname', 
-        'email', 
-        'phone_number', 
-        'address', 
-        'birth_date',
-        'hire_date',
-        'department_id',
-        'position_id', 
-        'status',
-        'salary'
-    ];
-
-    public function department(){
-        return $this->belongsTo(Department::class);
-    }
-
-    public function position(){
-        return $this->belongsTo(Position::class, 'position_id');
-    }
-}
-
-=== FILE: app/Models\LeaveRequest.php ===
-
-<?php
-
-namespace App\Models;
-
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\SoftDeletes;
-
-class LeaveRequest extends Model
-{
-    use HasFactory, SoftDeletes;
-
-    protected $fillable = [
-        'employee_id',
-        'leave_type',
-        'start_date',
-        'end_date',
-        'status',
-    ];
-
-    public function employee()
-    {
-        return $this->belongsTo(Employee::class);
-    }
-}
-
-
-=== FILE: app/Models\Position.php ===
-
-<?php
-
-namespace App\Models;
-
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\SoftDeletes;
-
-class Position extends Model
-{
-    use HasFactory, SoftDeletes;
-
-    protected $fillable = ['title', 'description'];
-}
-
-
-=== FILE: app/Models\Presence.php ===
-
-<?php
-
-namespace App\Models;
-
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\SoftDeletes;
-
-class Presence extends Model
-{
-    use HasFactory, SoftDeletes;
-
-    protected $fillable = ['employee_id','check_in', 'check_out', 'date', 'status'];
-
-    public function employee (){
-        return $this->belongsTo(Employee::class);
-    }
-}
-
-
-=== FILE: app/Models\Salary.php ===
-
-<?php
-
-namespace App\Models;
-
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\SoftDeletes;
-
-class Salary extends Model
-{
-    use HasFactory, SoftDeletes;
-
-    protected $fillable = ['employee_id', 'salary', 'bonuses', 'deductions', 'net_salary', 'pay_date'];
-
-    public function employee()
-    {
-        return $this->belongsTo(Employee::class);
-    }
-}
-
-
-=== FILE: app/Models\Task.php ===
-
-<?php
-
-namespace App\Models;
-
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\SoftDeletes;
-
-class Task extends Model
-{
-    use HasFactory, SoftDeletes;
-
-    protected $fillable = ['title', 'description', 'assigned_to', 'due_date', 'status'];
-
-    public function employee() {
-        return $this->belongsTo(Employee::class, 'assigned_to');
-    }
-}
-
-
-=== FILE: app/Models\User.php ===
-
-<?php
-
-namespace App\Models;
-
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Spatie\Permission\Traits\HasRoles;
-
-class User extends Authenticatable
-{
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasRoles;
-
+if (! function_exists('encodeId')) {
     /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
+     * Encrypts an integer ID for secure URL usage.
+     * @param int $id
+     * @return string
      */
-    protected $fillable = [
-        'name',
-        'email',
-        'password',
-    ];
-
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
-
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
+    function encodeId(int $id): string
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
+        return Crypt::encryptString((string) $id);
     }
-
-    public function employee()
-    {
-        return $this->belongsTo(Employee::class, 'employee_id');
-    }   
 }
 
+if (! function_exists('decodeId')) {
+    /**
+     * Decrypts an ID from a URL parameter back to an integer.
+     * @param string $encodedId
+     * @return int|null
+     */
+    function decodeId(string $encodedId): ?int
+    {
+        try {
+            $decrypted = Crypt::decryptString($encodedId);
+            return (int) $decrypted;
+        } catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
+            return null;
+        }
+    }
+}
 
-=== FILE: app/Http/Controllers\Controller.php ===
+=== FILE: app\Http\Controllers\Controller.php ===
 
 <?php
 
@@ -238,7 +47,7 @@ abstract class Controller
 }
 
 
-=== FILE: app/Http/Controllers\DashboardController.php ===
+=== FILE: app\Http\Controllers\DashboardController.php ===
 
 <?php
 
@@ -252,45 +61,68 @@ use App\Models\Presence;
 use App\Models\Task;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        $employee = Employee::count();
-        $department = Department::count();
-        $salary = Salary::count();
-        $presence = Presence::count();
+        $user = Auth::user();
         
-        // Mengambil tugas untuk ditampilkan di tabel ringkasan
-        $tasks = Task::with('employee')->limit(5)->get(); 
+        // hasRole dan getRoleNames tersedia karena trait HasRoles di model User
+        $isHRManager = $user->hasRole('HR Manager');
 
-        return view('dashboard.index', compact('employee', 'department', 'salary', 'presence', 'tasks'));
+        if ($isHRManager) {
+            // HR MANAGER DASHBOARD (All Data)
+            $employee = Employee::count();
+            $department = Department::count();
+            $salary = Salary::count();
+            $presence = Presence::count();
+            
+            // Mengambil 5 tugas terbaru (untuk HR Manager)
+            $tasks = Task::with('employee')->limit(5)->get(); 
+
+            return view('dashboard.hr_dashboard', compact('employee', 'department', 'salary', 'presence', 'tasks'));
+            
+        } else {
+            // EMPLOYEE DASHBOARD (Personal Data)
+            $user_role = $user->getRoleNames()->first() ?? 'Employee';
+            
+            // Hitung tugas pending hanya untuk user ini
+            $tasks_pending = Task::where('assigned_to', $user->employee_id)
+                                 ->where('status', 'pending')
+                                 ->count();
+            
+            return view('dashboard.employee_dashboard', compact('user_role', 'tasks_pending'));
+        }
     }
 
     /**
-     * MENGEMBALIKAN FUNGSI PRESENCE (AJAX endpoint untuk Chart.js).
+     * AJAX endpoint untuk Chart.js. Sekarang mendukung filter Personal.
      */
-    public function presence()
+    public function presence(Request $request)
     {
-        $targetYear = 2025; 
+        $targetYear = 2025;
+        $query = Presence::where('status', 'present')->whereYear('date', $targetYear);
         
-        // Query untuk mengambil total kehadiran per bulan
-        $rawMonthlyData = DB::select("
-            SELECT MONTH(date) as month, COUNT(*) as total
-            FROM presences
-            WHERE status = 'present' AND YEAR(date) = ?
-            GROUP BY MONTH(date)
-            ORDER BY MONTH(date) ASC
-        ", [$targetYear]);
+        if ($request->get('employee')) {
+            $query->where('employee_id', Auth::user()->employee_id);
+        }
+
+        $rawMonthlyData = $query
+            ->select(DB::raw('MONTH(date) as month'), DB::raw('COUNT(*) as total'))
+            ->groupBy(DB::raw('MONTH(date)'))
+            ->orderBy(DB::raw('MONTH(date)'), 'ASC')
+            ->pluck('total', 'month')
+            ->toArray();
 
         $dataForChart = array_fill(0, 12, 0); 
         
-        foreach ($rawMonthlyData as $item) {
-            $monthIndex = $item->month - 1; 
+        foreach ($rawMonthlyData as $month => $total) {
+            $monthIndex = $month - 1; 
             
             if ($monthIndex >= 0 && $monthIndex < 12) {
-                $dataForChart[$monthIndex] = $item->total; 
+                $dataForChart[$monthIndex] = $total; 
             }
         }
 
@@ -298,7 +130,7 @@ class DashboardController extends Controller
     }
 }
 
-=== FILE: app/Http/Controllers\DepartmentController.php ===
+=== FILE: app\Http\Controllers\DepartmentController.php ===
 
 <?php
 
@@ -356,7 +188,7 @@ class DepartmentController extends Controller
 }
 
 
-=== FILE: app/Http/Controllers\EmployeeController.php ===
+=== FILE: app\Http\Controllers\EmployeeController.php ===
 
 <?php
 
@@ -440,7 +272,152 @@ class EmployeeController extends Controller
         }  
 }
 
-=== FILE: app/Http/Controllers\LeaveRequestController.php ===
+=== FILE: app\Http\Controllers\ExportController.php ===
+
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\Models\Employee;
+use App\Models\Presence;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Illuminate\Support\Facades\Auth;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+
+class ExportController extends Controller
+{
+    /**
+     * Mengekspor Data Karyawan (Employees) ke file Excel (.xlsx).
+     */
+    public function exportEmployees()
+    {
+        // 1. Ambil data
+        $employees = Employee::with('department', 'position')->get();
+
+        // 2. Buat objek Spreadsheet baru
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        
+        // Atur judul Sheet
+        $sheet->setTitle('Data Karyawan');
+
+        // 3. Tulis Header Kolom
+        $headers = [
+            'ID', 
+            'Nama Lengkap', 
+            'Email', 
+            'Departemen', 
+            'Jabatan', 
+            'Tanggal Masuk', 
+            'Gaji Pokok',
+            'Status'
+        ];
+        $sheet->fromArray($headers, null, 'A1');
+
+        // 4. Tulis Data Baris
+        $row = 2;
+        foreach ($employees as $employee) {
+            $data = [
+                $employee->id,
+                $employee->fullname,
+                $employee->email,
+                $employee->department->name ?? 'N/A',
+                $employee->position->title ?? 'N/A',
+                $employee->hire_date,
+                $employee->salary,
+                ucfirst($employee->status)
+            ];
+            $sheet->fromArray($data, null, 'A' . $row);
+            $row++;
+        }
+
+        // 5. Atur lebar kolom agar otomatis
+        foreach (range('A', $sheet->getHighestColumn()) as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        // 6. Buat Writer dan kirimkan respons stream
+        $writer = new Xlsx($spreadsheet);
+        $fileName = 'data_karyawan_' . time() . '.xlsx';
+        
+        $response = new StreamedResponse(function() use ($writer) {
+            $writer->save('php://output');
+        });
+
+        $response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        $response->headers->set('Content-Disposition', 'attachment;filename="' . $fileName . '"');
+        $response->headers->set('Cache-Control', 'max-age=0');
+
+        return $response;
+    }
+
+    /**
+     * Mengekspor Data Kehadiran (Presences) ke file Excel (.xlsx).
+     */
+    public function exportPresences(Request $request)
+    {
+        // Logika otorisasi
+        if (!Auth::user()->can('presence_view_all')) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $query = Presence::with('employee');
+        
+        // Anda bisa menambahkan filter waktu atau karyawan di sini jika diperlukan
+        // Contoh: $query->whereYear('date', date('Y'));
+        
+        $presences = $query->orderBy('date', 'desc')->get();
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Data Kehadiran');
+
+        $headers = [
+            'ID', 
+            'Nama Karyawan', 
+            'Tanggal', 
+            'Check In', 
+            'Check Out', 
+            'Status'
+        ];
+        $sheet->fromArray($headers, null, 'A1');
+
+        $row = 2;
+        foreach ($presences as $presence) {
+            $data = [
+                $presence->id,
+                $presence->employee->fullname ?? 'N/A',
+                $presence->date,
+                $presence->check_in,
+                $presence->check_out,
+                ucfirst($presence->status)
+            ];
+            $sheet->fromArray($data, null, 'A' . $row);
+            $row++;
+        }
+
+        foreach (range('A', $sheet->getHighestColumn()) as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $fileName = 'data_kehadiran_' . time() . '.xlsx';
+        
+        $response = new StreamedResponse(function() use ($writer) {
+            $writer->save('php://output');
+        });
+
+        $response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        $response->headers->set('Content-Disposition', 'attachment;filename="' . $fileName . '"');
+        $response->headers->set('Cache-Control', 'max-age=0');
+
+        return $response;
+    }
+}
+
+=== FILE: app\Http\Controllers\LeaveRequestController.php ===
 
 <?php
 
@@ -598,7 +575,7 @@ class LeaveRequestController extends Controller
     }   
 }
 
-=== FILE: app/Http/Controllers\PositionController.php ===
+=== FILE: app\Http\Controllers\PositionController.php ===
 
 <?php
 
@@ -655,7 +632,7 @@ class PositionController extends Controller
     }
 }
 
-=== FILE: app/Http/Controllers\PresenceController.php ===
+=== FILE: app\Http\Controllers\PresenceController.php ===
 
 <?php
 
@@ -760,7 +737,7 @@ class PresenceController extends Controller
     }
 }
 
-=== FILE: app/Http/Controllers\ProfileController.php ===
+=== FILE: app\Http\Controllers\ProfileController.php ===
 
 <?php
 
@@ -824,7 +801,7 @@ class ProfileController extends Controller
 }
 
 
-=== FILE: app/Http/Controllers\RolePermissionController.php ===
+=== FILE: app\Http\Controllers\RolePermissionController.php ===
 
 <?php
 
@@ -883,7 +860,7 @@ class RolePermissionController extends Controller
     }
 }
 
-=== FILE: app/Http/Controllers\SalaryController.php ===
+=== FILE: app\Http\Controllers\SalaryController.php ===
 
 <?php
 
@@ -986,7 +963,7 @@ class SalaryController extends Controller
     }  
 }
 
-=== FILE: app/Http/Controllers\TaskController.php ===
+=== FILE: app\Http\Controllers\TaskController.php ===
 
 <?php
 
@@ -996,6 +973,13 @@ use App\Models\Employee;
 use Illuminate\Http\Request;
 use App\Models\Task;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Department;
+use App\Models\Salary;
+use App\Models\Presence;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\NewTaskNotification;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;      // <-- FIXED: Import Log Facade
 
 class TaskController extends Controller
 {
@@ -1003,8 +987,6 @@ class TaskController extends Controller
     {
         $baseQuery = Task::with('employee');
         
-        // Jika user TIDAK punya izin 'task_manage' (Karyawan biasa),
-        // maka data tugas DIBATASI HANYA yang ditugaskan ke dia.
         if (!Auth::user()->can('task_manage')) { 
             if (Auth::check() && Auth::user()->employee_id) {
                  $baseQuery->where('assigned_to', Auth::user()->employee_id);
@@ -1019,22 +1001,21 @@ class TaskController extends Controller
         
         return view('tasks.index', compact('tasks'));
     }
-    
-    // --- FUNGSI BARU: Untuk Mengambil Data Events JSON Kalender ---
+
     public function getEvents(Request $request)
     {
-        $events = $this->getCalendarEvents();
+        $isPersonalRequest = $request->has('personal') && Auth::check() && !Auth::user()->can('task_manage');
+
+        $events = $this->getCalendarEvents($isPersonalRequest);
         
         return response()->json($events);
     }
     
-    // --- FUNGSI PRIVAT PEMBANTU (Helper) ---
-    private function getCalendarEvents()
+    private function getCalendarEvents(bool $isPersonal = false)
     {
         $query = Task::query();
-
-        // Terapkan Logic Pembatasan Akses
-        if (!Auth::user()->can('task_manage')) { 
+        
+        if ($isPersonal || !Auth::user()->can('task_manage')) { 
             if (Auth::check() && Auth::user()->employee_id) {
                  $query->where('assigned_to', Auth::user()->employee_id);
             } else {
@@ -1049,14 +1030,15 @@ class TaskController extends Controller
             $events[] = [
                 'date' => $task->due_date, 
                 'title' => $task->title,
-                'url' => route('tasks.show', $task->id),
+                // Menggunakan helper encodeId()
+                'url' => route('tasks.show', encodeId($task->id)), 
                 'color' => $this->getEventColor($task->status), 
             ];
         }
         
         return $events;
     }
-
+    
     private function getEventColor($status)
     {
         return match ($status) {
@@ -1065,8 +1047,7 @@ class TaskController extends Controller
             default => '#6c757d', 
         };
     }
-    // --- AKHIR FUNGSI BARU ---
-
+    
     public function create()
     {
         if (!Auth::user()->can('task_create')) {
@@ -1076,10 +1057,113 @@ class TaskController extends Controller
         $employees = Employee::all();
         return view('tasks.create', compact('employees'));
     }
-    // ... (Fungsi store, edit, update, show, destroy, done, pending TIDAK DIUBAH)
+
+    public function store(Request $request)
+    {
+        if (!Auth::user()->can('task_create')) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'assigned_to' => 'required|exists:employees,id',
+            'due_date' => 'required|date_format:Y-m-d\TH:i', 
+            'status' => 'required|string'
+        ]);
+
+        $validated['due_date'] = Carbon::createFromFormat('Y-m-d\TH:i', $validated['due_date'])->format('Y-m-d H:i:s');
+        
+        $task = Task::create($validated);
+
+        try {
+            // Mail::send(new NewTaskNotification($task));
+        } catch (\Exception $e) {
+             Log::error('Gagal mengirim notifikasi tugas baru: ' . $e->getMessage()); // <-- FIXED
+        }
+
+        return redirect()->route('tasks.index')->with('success', 'Task created successfully.');
+    }
+
+    public function edit(Task $task)
+    {
+        if (!Auth::user()->can('task_edit')) {
+            abort(403, 'Unauthorized action.');
+        }
+        
+        $employees = Employee::all();
+        return view('tasks.edit', compact('task', 'employees'));
+    }
+
+    public function update(Request $request, Task $task)
+    {
+        if (!Auth::user()->can('task_edit')) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'assigned_to' => 'required|exists:employees,id',
+            'due_date' => 'required|date_format:Y-m-d\TH:i',
+            'status' => 'required|string'
+        ]);
+        
+        $validated['due_date'] = Carbon::createFromFormat('Y-m-d\TH:i', $validated['due_date'])->format('Y-m-d H:i:s');
+
+        $task->update($validated);
+        return redirect()->route('tasks.index')->with('success', 'Task updated successfully.');
+    }
+
+    public function show(string $encodedId)
+    {
+        // POIN 8: Dekripsi ID
+        $taskId = decodeId($encodedId);
+        if (!$taskId) {
+            abort(404, 'Task not found.');
+        }
+        $task = Task::findOrFail($taskId);
+        
+        if (!Auth::user()->can('task_manage') && $task->assigned_to !== Auth::user()->employee_id) {
+            abort(403, 'Unauthorized action.');
+        }
+        return view('tasks.show', compact('task'));
+    }
+
+    public function done(int $id)
+    {
+        if (!Auth::user()->can('task_mark_status')) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $task = Task::findOrFail($id);
+        $task->update(['status' => 'completed']);
+        return redirect()->route('tasks.index')->with('success', 'Task marked as done successfully');
+    }
+    
+    public function pending(int $id)
+    {
+        if (!Auth::user()->can('task_mark_status')) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $task = Task::findOrFail($id);
+        $task->update(['status' => 'pending']);
+        return redirect()->route('tasks.index')->with('success', 'Task marked as pending successfully');
+    }
+
+    public function destroy(Task $task)
+    {
+        if (!Auth::user()->can('task_delete')) {
+            abort(403, 'Unauthorized action.');
+        }
+        
+        $task->delete();
+        return redirect()->route('tasks.index')->with('success', 'Task deleted successfully.');
+    }
 }
 
-=== FILE: app/Http/Controllers\Auth\AuthenticatedSessionController.php ===
+=== FILE: app\Http\Controllers\Auth\AuthenticatedSessionController.php ===
 
 <?php
 
@@ -1137,7 +1221,7 @@ class AuthenticatedSessionController extends Controller
 }
 
 
-=== FILE: app/Http/Controllers\Auth\ConfirmablePasswordController.php ===
+=== FILE: app\Http\Controllers\Auth\ConfirmablePasswordController.php ===
 
 <?php
 
@@ -1181,7 +1265,7 @@ class ConfirmablePasswordController extends Controller
 }
 
 
-=== FILE: app/Http/Controllers\Auth\EmailVerificationNotificationController.php ===
+=== FILE: app\Http\Controllers\Auth\EmailVerificationNotificationController.php ===
 
 <?php
 
@@ -1209,7 +1293,7 @@ class EmailVerificationNotificationController extends Controller
 }
 
 
-=== FILE: app/Http/Controllers\Auth\EmailVerificationPromptController.php ===
+=== FILE: app\Http\Controllers\Auth\EmailVerificationPromptController.php ===
 
 <?php
 
@@ -1234,7 +1318,7 @@ class EmailVerificationPromptController extends Controller
 }
 
 
-=== FILE: app/Http/Controllers\Auth\NewPasswordController.php ===
+=== FILE: app\Http\Controllers\Auth\NewPasswordController.php ===
 
 <?php
 
@@ -1300,7 +1384,7 @@ class NewPasswordController extends Controller
 }
 
 
-=== FILE: app/Http/Controllers\Auth\PasswordController.php ===
+=== FILE: app\Http\Controllers\Auth\PasswordController.php ===
 
 <?php
 
@@ -1333,7 +1417,7 @@ class PasswordController extends Controller
 }
 
 
-=== FILE: app/Http/Controllers\Auth\PasswordResetLinkController.php ===
+=== FILE: app\Http\Controllers\Auth\PasswordResetLinkController.php ===
 
 <?php
 
@@ -1381,7 +1465,7 @@ class PasswordResetLinkController extends Controller
 }
 
 
-=== FILE: app/Http/Controllers\Auth\RegisteredUserController.php ===
+=== FILE: app\Http\Controllers\Auth\RegisteredUserController.php ===
 
 <?php
 
@@ -1438,7 +1522,7 @@ class RegisteredUserController extends Controller
 }
 
 
-=== FILE: app/Http/Controllers\Auth\VerifyEmailController.php ===
+=== FILE: app\Http\Controllers\Auth\VerifyEmailController.php ===
 
 <?php
 
@@ -1469,7 +1553,11 @@ class VerifyEmailController extends Controller
 }
 
 
-=== FILE: app/Http/Requests\ProfileUpdateRequest.php ===
+=== FILE: app\Http\Middleware\CheckRole.php ===
+
+
+
+=== FILE: app\Http\Requests\ProfileUpdateRequest.php ===
 
 <?php
 
@@ -1503,7 +1591,7 @@ class ProfileUpdateRequest extends FormRequest
 }
 
 
-=== FILE: app/Http/Requests\Auth\LoginRequest.php ===
+=== FILE: app\Http\Requests\Auth\LoginRequest.php ===
 
 <?php
 
@@ -1588,6 +1676,311 @@ class LoginRequest extends FormRequest
     public function throttleKey(): string
     {
         return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());
+    }
+}
+
+
+=== FILE: app\Models\Department.php ===
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+class Department extends Model
+{
+    use HasFactory, SoftDeletes;
+
+    protected $fillable = ['name', 'description', 'status'];
+}
+
+
+=== FILE: app\Models\Employee.php ===
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+class Employee extends Model
+{
+    use HasFactory, SoftDeletes;
+
+    protected $fillable = [
+        'fullname', 
+        'email', 
+        'phone_number', 
+        'address', 
+        'birth_date',
+        'hire_date',
+        'department_id',
+        'position_id', 
+        'status',
+        'salary'
+    ];
+
+    public function department(){
+        return $this->belongsTo(Department::class);
+    }
+
+    public function position(){
+        return $this->belongsTo(Position::class, 'position_id');
+    }
+
+    /**
+     * Relasi: Employee hasOne User (Satu Employee terhubung ke satu akun User)
+     * foreign key 'employee_id' ada di tabel User.
+     */
+    public function user()
+    {
+        return $this->hasOne(User::class, 'employee_id');
+    }
+}
+
+=== FILE: app\Models\LeaveRequest.php ===
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+class LeaveRequest extends Model
+{
+    use HasFactory, SoftDeletes;
+
+    protected $fillable = [
+        'employee_id',
+        'leave_type',
+        'start_date',
+        'end_date',
+        'status',
+    ];
+
+    public function employee()
+    {
+        return $this->belongsTo(Employee::class);
+    }
+}
+
+
+=== FILE: app\Models\Position.php ===
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+class Position extends Model
+{
+    use HasFactory, SoftDeletes;
+
+    protected $fillable = ['title', 'description'];
+}
+
+
+=== FILE: app\Models\Presence.php ===
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+class Presence extends Model
+{
+    use HasFactory, SoftDeletes;
+
+    protected $fillable = ['employee_id','check_in', 'check_out', 'date', 'status'];
+
+    public function employee (){
+        return $this->belongsTo(Employee::class);
+    }
+}
+
+
+=== FILE: app\Models\Salary.php ===
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+class Salary extends Model
+{
+    use HasFactory, SoftDeletes;
+
+    protected $fillable = ['employee_id', 'salary', 'bonuses', 'deductions', 'net_salary', 'pay_date'];
+
+    public function employee()
+    {
+        return $this->belongsTo(Employee::class);
+    }
+}
+
+
+=== FILE: app\Models\Task.php ===
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+class Task extends Model
+{
+    use HasFactory, SoftDeletes;
+
+    protected $fillable = ['title', 'description', 'assigned_to', 'due_date', 'status'];
+
+    public function employee() {
+        return $this->belongsTo(Employee::class, 'assigned_to');
+    }
+}
+
+
+=== FILE: app\Models\User.php ===
+
+<?php
+
+namespace App\Models;
+
+// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Spatie\Permission\Traits\HasRoles;
+
+class User extends Authenticatable
+{
+    /** @use HasFactory<\Database\Factories\UserFactory> */
+    use HasFactory, Notifiable, HasRoles; // <-- HasRoles untuk hasRole/getRoleNames
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var list<string>
+     */
+    protected $fillable = [
+        'name',
+        'email',
+        'password',
+        'employee_id', // <-- DITAMBAHKAN AGAR BISA MASS ASSIGNMENT
+    ];
+
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var list<string>
+     */
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+        ];
+    }
+
+    public function employee()
+    {
+        return $this->belongsTo(Employee::class, 'employee_id');
+    }   
+}
+
+=== FILE: app\Providers\AppServiceProvider.php ===
+
+<?php
+
+namespace App\Providers;
+
+use Illuminate\Support\ServiceProvider;
+
+class AppServiceProvider extends ServiceProvider
+{
+    /**
+     * Register any application services.
+     */
+    public function register(): void
+    {
+        //
+    }
+
+    /**
+     * Bootstrap any application services.
+     */
+    public function boot(): void
+    {
+        //
+    }
+}
+
+
+=== FILE: app\View\Components\AppLayout.php ===
+
+<?php
+
+namespace App\View\Components;
+
+use Illuminate\View\Component;
+use Illuminate\View\View;
+
+class AppLayout extends Component
+{
+    /**
+     * Get the view / contents that represents the component.
+     */
+    public function render(): View
+    {
+        return view('layouts.app');
+    }
+}
+
+
+=== FILE: app\View\Components\GuestLayout.php ===
+
+<?php
+
+namespace App\View\Components;
+
+use Illuminate\View\Component;
+use Illuminate\View\View;
+
+class GuestLayout extends Component
+{
+    /**
+     * Get the view / contents that represents the component.
+     */
+    public function render(): View
+    {
+        return view('layouts.guest');
     }
 }
 
@@ -2799,274 +3192,583 @@ $classes = ($active ?? false)
 <input @disabled($disabled) {{ $attributes->merge(['class' => 'border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm']) }}>
 
 
-=== FILE: resources/views\dashboard\index.blade.php ===
+=== FILE: resources/views\dashboard\employee_dashboard.blade.php ===
 
-<!DOCTYPE html>
-<html lang="en">
+@extends('layouts.dashboard')
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Human Resource App</title>
+@section('content')
+<header class="mb-3">
+    <a href="#" class="burger-btn d-block d-xl-none">
+        <i class="bi bi-justify fs-3"></i>
+    </a>
+</header>
 
-    <link rel="shortcut icon" href="{{ asset('template/dist/assets/compiled/svg/favicon.svg') }}" type="image/x-icon">
-    <link rel="shortcut icon"
-        href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACEAAAAiCAYAAADRcLDBAAAEs2lUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4KPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iWE1QIENvcmUgNS41LjAiPgogPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4KICA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIgogICAgeG1sbnM6ZXhpZj0iaHR0cDovL25zLmFkb2JlLmNvbS9leGlmLzEuMC8iCiAgICB4bWxuczp0aWZmPSJodHRwOi8vbnMuYWRvYmUuY29tL3RpZmYvMS4wLyIKICAgIHhtbG5zOnBob3Rvc2hvcD0iaHR0cDovL25zLmFkb2JlLmNvbS9waG90b3Nob3AvMS4wLyIKICAgIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIKICAgIHhtbG5zOnhtcE1NPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvbW0vIgogICAgeG1sbnM6c3RFdnQ9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZUV2ZW50IyIKICAgIGV4aWY6UGl4ZWxYRGltZW5zaW9uPSIzMyIKICAgIGV4aWY6UGl4ZWxZRGltZW5zaW9uPSIzNCIKICAgIGV4aWY6Q29sb3JTcGFjZT0iMSIKICAgIHRpZmY6SW1hZ2VXaWR0aD0iMzMiCiAgIHRpZmY6SW1hZ2VMZW5ndGg9IjM0IgogICB0aWZmOlJlc29sdXRpb25Vbml0PSIzIgogICB0aWZmOlhSZXNvbHV0aW9uPSI5Ni4wIgogICB0aWZmOllSZXNvbHV0aW9uPSI5Ni4wIgogICBwaG90b3Nob3A6Q29sb3JNb2RlPSIzIgogICBwaG90b3Nob3A6SUNDUHJvZmlsZT0ic1JHQiBJRUM2MTk2Ni0yLjEiCiAgIHhtcDpNb2RpZnlEYXRlPSIyMDIyLTAzLTMxVDEwOjUwOjIzKzAyOjAwIgogICB4bXA6TWV0YWRhdGFEYXRlPSIyMDIyLTAzLTMxVDEwOjUwOjIzKzAyOjAwIj4KICAgPHhtcE1NOkhpc3Rvcnk+CiAgICA8cmRmOlNlcT4KICAgICA8cmRmOmxpCiAgICAgICBzdEV2dDphY3Rpb249InByb2R1Y2VkIgogICAgICAgc3RFdnQ6c29mdHdhcmVBZ2VudD0iQWZmaW5pdHkgRGVzaWduZXIgMS4xMC4xIgogICAgICAgc3RFdnQ6d2hlbj0iMjAyMi0wMy0zMVQxMDo1MDo0MiswMjowMCIvPgogICAgIDwvcmRmOlNlcT4KICAgIDwveG1wTU06SGlzdG9yeT4KICA8L3JkZjpEZXNjcmlwdGlvbj4KIDwvcmRmOlJERj4KPC94OnhtcG1ldGE+Cjw/eHBhY2tldCBlbmQ9InIiPz5V57uAAAABgmlDQ1BzUkdCIElFQzYxOTY2LTIuMQAAKJF1kc8rRFEUxz9maORHo1hYKC9hISNGTWwsRn4VFmOUX5uZZ36oeTOv954kW2WrKLHxa8FfwFZZK0WkZClrYoOe87ypmWTO7dzzud97z+nec8ETzaiaWd4NWtYyIiNhZWZ2TvE946WZSjqoj6mmPjE1HKWkfdxR5sSbgFOr9Ll/rXoxYapQVik8oOqGJTwqPL5i6Q5vCzeo6dii8KlwpyEXFL519LjLLw6nXP5y2IhGBsFTJ6ykijhexGra0ITl5bRqmWU1fx/nJTWJ7PSUxBbxJkwijBBGYYwhBgnRQ7/MIQIE6ZIVJfK7f/MnyUmuKrPOKgZLpEhj0SnqslRPSEyKnpCRYdXp/9++msneoFu9JgwVT7b91ga+LfjetO3PQ9v+PgLvI1xkC/m5A+h7F32zoLXug38dzi4LWnwHzjeg8UGPGbFfySvuSSbh9QRqZ6H+Gqrm3Z7l9zm+h+iafNUV7O5Bu5z3L/wAdthn7QIme0YAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAJTSURBVFiF7Zi9axRBGIefEw2IdxFBRQsLWUTBaywSK4ubdSGVIY1Y6HZql8ZKCGIqwX/AYLmCgVQKfiDn7jZeEQMWfsSAHAiKqPiB5mIgELWYOW5vzc3O7niHhT/YZvY37/swM/vOzJbIqVq9uQ04CYwCI8AhYAlYAB4Dc7HnrOSJWcoJcBS4ARzQ2F4BZ2LPmTeNuykHwEWgkQGAet9QfiMZjUSt3hwD7psGTWgs9pwH1hC1enMYeA7sKwDxBqjGnvNdZzKZjqmCAKh+U1kmEwi3IEBbIsugnY5avTkEtIAtFhBrQCX2nLVehqyRqFoCAAwBh3WGLAhbgCRIYYinwLolwLqKUwwi9pxV4KUlxKKKUwxC6ZElRCPLYAJxGfhSEOCz6m8HEXvOB2CyIMSk6m8HoXQTmMkJcA2YNTHm3congOvATo3tE3A29pxbpnFzQSiQPcB55IFmFNgFfEQeahaAGZMpsIJIAZWAHcDX2HN+2cT6r39GxmvC9aPNwH5gO1BOPFuBVWAZue0vA9+A12EgjPadnhCuH1WAE8ivYAQ4ohKaagV4gvxi5oG7YSA2vApsCOH60WngKrA3R9IsvQUuhIGY00K4flQG7gHH/mLytB4C42EgfrQb0mV7us8AAMeBS8mGNMR4nwHamtBB7B4QRNdaS0M8GxDEog7iyoAguvJ0QYSBuAOcAt71Kfl7wA8DcTvZ2KtOlJEr+ByyQtqqhTyHTIeB+ONeqi3brh+VgIN0fohUgWGggizZFTplu12yW8iy/YLOGWMpDMTPXnl+Az9vj2HERYqPAAAAAElFTkSuQmCC"
-        type="image/png">
-    <link rel="stylesheet" href="{{ asset('template/dist/assets/compiled/css/app.css') }}">
-    <link rel="stylesheet" href="{{ asset('template/dist/assets/compiled/css/app-dark.css') }}">
-    <link rel="stylesheet" href="{{ asset('template/dist/assets/compiled/css/iconly.css') }}">
-    <link rel="stylesheet" href="{{ asset('template/dist/assets/extensions/simple-datatables/style.css') }}">
-    <link rel="stylesheet" href="{{ asset('template/dist/assets/extensions/table-datatables.css') }}">
-    <link rel="stylesheet" href="{{ asset('template/dist/assets/compiled/css/ui-icons-dripicons.css') }}">
-    <link rel="stylesheet" href="{{ asset('template/dist/assets/extensions/@icon/dripicons/dripicons.css') }}">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<div class="page-heading">
+    <h3>Dashboard Karyawan</h3>
+</div>
+
+<div class="page-content">
     
-    {{-- --- START: Penambahan Aset Kalender --- --}}
-    {{-- Load CSS Kalender (Library yang kamu sediakan) --}}
-    <link rel="stylesheet" href="{{ asset('interactive-bs-event-calenda/dist/bs-calendar.min.css') }}"> 
-    {{-- --- END: Penambahan Aset Kalender --- --}}
-</head>
-
-<body>
-    <script src="{{ asset('template/dist/assets/static/js/initTheme.js') }}"></script>
-    <div id="app">
-        <div id="sidebar">
-            <div class="sidebar-wrapper active">
-                <div class="sidebar-header position-relative">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="logo">
-                            <a href="{{ url('/') }}"><img src="{{ asset('template/dist/assets/compiled/svg/logo.svg') }}"
-                                    alt="Logo" srcset=""></a>
-                        </div>
-                        <div class="theme-toggle d-flex gap-2  align-items-center mt-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
-                                aria-hidden="true" role="img" class="iconify iconify--system-uicons" width="20"
-                                height="20" preserveAspectRatio="xMidYMid meet" viewBox="0 0 21 21">
-                                <g fill="none" fill-rule="evenodd" stroke="currentColor" stroke-linecap="round"
-                                    stroke-linejoin="round">
-                                    <path
-                                        d="M10.5 14.5c2.219 0 4-1.763 4-3.982a4.003 4.003 0 0 0-4-4.018c-2.219 0-4 1.781-4 4c0 2.219 1.781 4 4 4zM4.136 4.136L5.55 5.55m9.9 9.9l1.414 1.414M1.5 10.5h2m14 0h2M4.135 16.863L5.55 15.45m9.899-9.9l1.414-1.415M10.5 19.5v-2m0-14v-2"
-                                        opacity=".3"></path>
-                                    <g transform="translate(-210 -1)">
-                                        <path d="M220.5 2.5v2m6.5.5l-1.5 1.5"></path>
-                                        <circle cx="220.5" cy="11.5" r="4"></circle>
-                                        <path d="m214 5l1.5 1.5m5 14v-2m6.5-.5l-1.5-1.5M214 18l1.5-1.5m-4-5h2m14 0h2"></path>
-                                    </g>
-                                </g>
-                            </svg>
-                            <div class="form-check form-switch fs-6">
-                                <input class="form-check-input  me-0" type="checkbox" id="toggle-dark"
-                                    style="cursor: pointer">
-                                <label class="form-check-label"></label>
+    {{-- RINGKASAN SEDERHANA (Hanya untuk Karyawan) --}}
+    <div class="row">
+        <div class="col-6 col-lg-3 col-md-6">
+            <div class="card">
+                <div class="card-body px-4 py-4-5">
+                    <div class="row">
+                        <div class="col-md-4 col-lg-12 col-xl-12 col-xxl-5 d-flex justify-content-start ">
+                            <div class="stats-icon blue mb-2">
+                                <i class="icon dripicons dripicons-user"></i>
                             </div>
-                            <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
-                                aria-hidden="true" role="img" class="iconify iconify--mdi" width="20" height="20"
-                                preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
-                                <path fill="currentColor"
-                                    d="m17.75 4.09l-2.53 1.94l.91 3.06l-2.63-1.81l-2.63 1.81l.91-3.06l-2.53-1.94L12.44 4l1.06-3l1.06 3l3.19.09m3.5 6.91l-1.64 1.25l.59 1.98l-1.7-1.17l-1.7 1.17l.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95l2.06.05m-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85c-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14c.4-.4.82-.76 1.27-1.08c.75-.53 1.93.36 1.85 1.19c-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82c-2.81 3.14-2.7 7.96.31 10.98c3.02 3.01 7.84 3.12 10.98.31Z">
-                                </path>
-                            </svg>
                         </div>
-                        <div class="sidebar-toggler  x">
-                            <a href="#" class="sidebar-hide d-xl-none d-block"><i class="bi bi-x bi-middle"></i></a>
+                        <div class="col-md-8 col-lg-12 col-xl-12 col-xxl-7">
+                            <h6 class="text-muted font-semibold">My Role</h6>
+                            {{-- $user_role dikirim dari DashboardController --}}
+                            <h6 class="font-extrabold mb-0">{{ $user_role }}</h6> 
                         </div>
                     </div>
                 </div>
-
-                {{-- REVISI UTAMA DIMULAI DARI SINI --}}
-                <div class="sidebar-menu">
-                    <ul class="menu">
-                        <li class="sidebar-title">Menu</li>
-
-                        {{-- 1. Dashboard --}}
-                        @can('dashboard_view')
-                        <li class="sidebar-item {{ request()->is('dashboard') ? 'active' : '' }}">
-                            <a href="{{ url('/dashboard') }}" class='sidebar-link'>
-                                <i class="bi bi-grid-fill"></i>
-                                <span>Dashboard</span>
-                            </a>
-                        </li>
-                        @endcan
-
-                        {{-- 2. Tasks Group --}}
-                        @canany(['task_view', 'task_manage', 'task_create', 'task_edit', 'task_delete'])
-                        <li class="sidebar-item has-sub {{ request()->is('tasks*') ? 'active' : '' }}">
-                            <a href="#" class='sidebar-link'>
-                                <i class="bi bi-check-circle-fill"></i>
-                                <span>Tasks</span>
-                            </a>
-                            <ul class="submenu {{ request()->is('tasks*') ? 'active' : '' }}">
-                                @can('task_view')
-                                <li class="submenu-item {{ request()->is('tasks') && !request()->is('tasks/calendar') ? 'active' : '' }}">
-                                    <a href="{{ url('/tasks') }}" class="submenu-link">
-                                        <i class="bi bi-list-task"></i>
-                                        <span>Task List</span>
-                                    </a>
-                                </li>
-                                @endcan
-                                
-                                {{-- Sub Menu Baru: Kalender --}}
-                                @can('task_view')
-                                <li class="submenu-item {{ request()->is('tasks/calendar') ? 'active' : '' }}">
-                                    <a href="{{ route('tasks.calendar') }}" class="submenu-link">
-                                        <i class="bi bi-calendar-check"></i>
-                                        <span>Task Calendar</span>
-                                    </a>
-                                </li>
-                                @endcan
-                            </ul>
-                        </li>
-                        @endcanany
-                        {{-- END: Tasks Group --}}
-
-                        {{-- 3. Grup Kepegawaian (Hanya muncul jika punya SALAH SATU izin di bawah) --}}
-                        @canany(['employee_manage', 'department_manage', 'position_manage', 'permission_manage'])
-                        <li class="sidebar-item has-sub {{ request()->is('employees*') || request()->is('departments*') || request()->is('positions*') || request()->is('manage-permissions*') ? 'active' : '' }}">
-                            <a href="#" class='sidebar-link'>
-                                <i class="bi bi-people-fill"></i>
-                                <span>Manajemen HR</span> 
-                            </a>
-                            
-                            <ul class="submenu {{ request()->is('employees*') || request()->is('departments*') || request()->is('positions*') || request()->is('manage-permissions*') ? 'active' : '' }}">
-                                
-                                @can('employee_manage')
-                                <li class="submenu-item {{ request()->is('employees*') ? 'active' : '' }}">
-                                    <a href="{{ url('/employees') }}" class="submenu-link">
-                                        <i class="bi bi-file-person-fill"></i>
-                                        <span>Employees</span>
-                                    </a>
-                                </li>
-                                @endcan
-                                
-                                @can('department_manage')
-                                <li class="submenu-item {{ request()->is('departments*') ? 'active' : '' }}">
-                                    <a href="{{ url('/departments') }}" class="submenu-link">
-                                        <i class="bi bi-building"></i>
-                                        <span>Departments</span></a>
-                                </li>
-                                @endcan
-                                
-                                @can('position_manage')
-                                <li class="submenu-item {{ request()->is('positions*') ? 'active' : '' }}">
-                                    <a href="{{ url('/positions') }}" class="submenu-link">
-                                        <i class="bi bi-person-fill"></i>
-                                        <span>Positions</span>
-                                    </a>
-                                </li>
-                                @endcan
-
-                                @can('permission_manage')
-                                <li class="submenu-item {{ request()->is('manage-permissions*') ? 'active' : '' }}">
-                                    <a href="{{ route('permissions.index') }}" class="submenu-link">
-                                        <i class="bi bi-shield-lock-fill"></i>
-                                        <span>Permissions</span>
-                                    </a>
-                                </li>
-                                @endcan
-                            </ul>
-                        </li>
-                        @endcanany
-                        
-
-                        {{-- 4. Grup Kehadiran --}}
-                        @canany(['presence_create', 'leave_manage'])
-                        <li class="sidebar-item has-sub {{ request()->is('presences*') || request()->is('leave-requests*') ? 'active' : '' }}">
-                            <a href="#" class='sidebar-link'>
-                                <i class="bi bi-calendar3"></i>
-                                <span>Kehadiran</span>
-                            </a>
-                            <ul class="submenu {{ request()->is('presences*') || request()->is('leave-requests*') ? 'active' : '' }}">
-                                @can('presence_create')
-                                <li class="submenu-item {{ request()->is('presences*') ? 'active' : '' }}">
-                                    <a href="{{ url('/presences') }}" class="submenu-link">
-                                        <i class="bi bi-calendar2-check"></i>
-                                        <span>Presences</span></a>
-                                </li>
-                                @endcan
-                                @can('leave_manage')
-                                <li class="submenu-item {{ request()->is('leave-requests*') ? 'active' : '' }}">
-                                    <a href="{{ url('/leave-requests') }}" class="submenu-link">
-                                        <i class="bi bi-file-earmark-arrow-up"></i>
-                                        <span>Leave Requests</span>
-                                    </a>
-                                </li>
-                                @endcan
-                            </ul>
-                        </li>
-                        @endcanany
-
-                        {{-- 5. Salaries --}}
-                        @can('salary_view_all')
-                        <li class="sidebar-item {{ request()->is('salaries*') ? 'active' : '' }}">
-                            <a href="{{ url('/salaries') }}" class='sidebar-link'>
-                                <i class="bi bi-currency-dollar"></i>
-                                <span>Salaries</span>
-                            </a>
-                        </li>
-                        @endcan
-
-                        {{-- 6. Logout (Selalu tampil) --}}
-                        <li class="sidebar-item">
-                            <a href="{{ route('logout') }}" class='sidebar-link' 
-                               onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                                <i class="bi bi-box-arrow-right"></i>
-                                <span>Logout</span>
-                            </a>
-                            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-                                @csrf
-                            </form>
-                        </li>
-                    </ul>
-                </div>
-                {{-- REVISI UTAMA SELESAI --}}
-
             </div>
         </div>
-        <div id="main">
-            @yield('content')
-
-            <footer>
-                <div class="footer clearfix mb-0 text-muted">
-                    <div class="float-start">
-                        <p>2023 &copy; Mazer</p>
-                    </div>
-                    <div class="float-end">
-                        <p>Crafted with <span class="text-danger"><i class="bi bi-heart-fill icon-mid"></i></span>
-                            by <a href="https://saugi.me">Saugi</a></p>
+        <div class="col-6 col-lg-3 col-md-6">
+            <div class="card">
+                <div class="card-body px-4 py-4-5">
+                    <div class="row">
+                        <div class="col-md-4 col-lg-12 col-xl-12 col-xxl-5 d-flex justify-content-start ">
+                            <div class="stats-icon red mb-2">
+                                <i class="icon dripicons dripicons-to-do"></i>
+                            </div>
+                        </div>
+                        <div class="col-md-8 col-lg-12 col-xl-12 col-xxl-7">
+                            <h6 class="text-muted font-semibold">Tugas Pending</h6>
+                            {{-- $tasks_pending dikirim dari DashboardController --}}
+                            <h6 class="font-extrabold mb-0">{{ $tasks_pending }}</h6> 
+                        </div>
                     </div>
                 </div>
-            </footer>
+            </div>
         </div>
     </div>
-    <script src="{{ asset('template/dist/assets/static/js/components/dark.js') }}"></script>
-    <script src="{{ asset('template/dist/assets/extensions/perfect-scrollbar/perfect-scrollbar.min.js') }}"></script>
+
+    {{-- KALENDER TUGAS (EVENT) - Hanya Tugas Milik Sendiri --}}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Jadwal Tugas Saya</h4>
+                    <p class="text-subtitle text-muted">Kalender Tugas hanya menampilkan tugas yang ditugaskan kepada Anda.</p>
+                </div>
+                <div class="card-body">
+                    <div id="calendar-container-employee"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {{-- CHART KEHADIRAN - Hanya Kehadiran Milik Sendiri --}}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Chart Kehadiran Pribadi</h4>
+                    <p class="text-subtitle text-muted">Total Kehadiran Bulanan Anda (2025).</p>
+                </div>
+                <div class="card-body">
+                    <canvas id="presence-employee"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+</div>
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        // --- LOGIC KALENDER TUGAS (Personal) ---
+        const calendarContainer = document.getElementById('calendar-container-employee');
+        if (calendarContainer) {
+            // Memanggil endpoint tasks.events dengan flag 'personal=true'
+            fetch('{{ route('tasks.events') }}?personal=true') 
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Gagal memuat data tugas.');
+                    }
+                    return response.json();
+                })
+                .then(events => {
+                    new BSCalendar(calendarContainer, {
+                        events: events,
+                        startMonth: new Date().getMonth(),
+                        startYear: new Date().getFullYear(),
+                        weekStart: 1, 
+                        view: 'month'
+                    });
+                })
+                .catch(error => {
+                    console.error('Error in calendar initialization:', error);
+                    calendarContainer.innerHTML = `<div class="alert alert-danger">Gagal memuat kalender: ${error.message}</div>`;
+                });
+        }
+        
+        // --- LOGIC CHART KEHADIRAN (Personal) ---
+        if (document.getElementById('presence-employee')) {
+            var ctxBar = document.getElementById('presence-employee').getContext('2d');
+            var myBar = new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'],
+                    datasets: [{
+                        label: 'Kehadiran Saya',
+                        data: [],
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Total Kehadiran Bulanan Anda (2025)'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            suggestedMax: 30
+                        }
+                    }
+                }
+            });
+
+            function updateData() {
+                // Memanggil AJAX endpoint dengan flag 'employee=true'
+                fetch('{{ url("/dashboard/presence") }}?employee=true') 
+                    .then(response => response.json())
+                    .then((output) => {
+                        if (output && Array.isArray(output) && output.length === 12) {
+                            myBar.data.datasets[0].data = output;
+                            myBar.update();
+                        } else {
+                            console.error("Data kehadiran yang diterima dari server tidak valid:", output);
+                            myBar.data.datasets[0].data = Array(12).fill(0);
+                            myBar.update();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Fetch error:', error);
+                    });
+            }
+            updateData();
+        }
+    });
+</script>
+@endpush
+@endsection
+
+=== FILE: resources/views\dashboard\hr_dashboard.blade.php ===
+
+@extends('layouts.dashboard')
+
+@section('content')
+<header class="mb-3">
+    <a href="#" class="burger-btn d-block d-xl-none">
+        <i class="bi bi-justify fs-3"></i>
+    </a>
+</header>
+
+<div class="page-heading">
+    <h3>Dashboard Overview (HR Manager)</h3>
+</div>
+<div class="page-content">
+    
+    {{-- BARIS CARD RINGKASAN --}}
+    <div class="row">
+        <div class="col-6 col-lg-3 col-md-6">
+            <div class="card">
+                <div class="card-body px-4 py-4-5">
+                    <div class="row">
+                        <div class="col-md-4 col-lg-12 col-xl-12 col-xxl-5 d-flex justify-content-start ">
+                            <div class="stats-icon purple mb-2">
+                                <i class="icon dripicons dripicons-tag"></i>
+                            </div>
+                        </div>
+                        <div class="col-md-8 col-lg-12 col-xl-12 col-xxl-7">
+                            <h6 class="text-muted font-semibold">Departments</h6>
+                            <h6 class="font-extrabold mb-0">{{ $department }}</h6>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3 col-md-6">
+            <div class="card">
+                <div class="card-body px-4 py-4-5">
+                    <div class="row">
+                        <div class="col-md-4 col-lg-12 col-xl-12 col-xxl-5 d-flex justify-content-start ">
+                            <div class="stats-icon blue mb-2">
+                                <i class="icon dripicons dripicons-user"></i>
+                            </div>
+                        </div>
+                        <div class="col-md-8 col-lg-12 col-xl-12 col-xxl-7">
+                            <h6 class="text-muted font-semibold">Employees</h6>
+                            <h6 class="font-extrabold mb-0">{{ $employee }}</h6>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3 col-md-6">
+            <div class="card">
+                <div class="card-body px-4 py-4-5">
+                    <div class="row">
+                        <div class="col-md-4 col-lg-12 col-xl-12 col-xxl-5 d-flex justify-content-start ">
+                            <div class="stats-icon green mb-2">
+                                <i class="icon dripicons dripicons-alarm"></i>
+                            </div>
+                        </div>
+                        <div class="col-md-8 col-lg-12 col-xl-12 col-xxl-7">
+                            <h6 class="text-muted font-semibold">Total Presences</h6>
+                            <h6 class="font-extrabold mb-0">{{ $presence }}</h6>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3 col-md-6">
+            <div class="card">
+                <div class="card-body px-4 py-4-5">
+                    <div class="row">
+                        <div class="col-md-4 col-lg-12 col-xl-12 col-xxl-5 d-flex justify-content-start ">
+                            <div class="stats-icon red mb-2">
+                                <i class="icon dripicons dripicons-to-do"></i>
+                            </div>
+                        </div>
+                        <div class="col-md-8 col-lg-12 col-xl-12 col-xxl-7">
+                            <h6 class="text-muted font-semibold">Salaries Recorded</h6>
+                            <h6 class="font-extrabold mb-0">{{ $salary }}</h6>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- KALENDER TUGAS (EVENT) - HR Manager (Semua Tugas) --}}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Kalender Semua Tugas Perusahaan</h4>
+                    <p class="text-subtitle text-muted">Melihat jadwal dan *deadline* semua karyawan.</p>
+                </div>
+                <div class="card-body">
+                    <div id="calendar-container-hr"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {{-- CHART KEHADIRAN - HR Manager (Semua Karyawan) --}}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Chart Kehadiran Seluruh Karyawan</h4>
+                    <p class="text-subtitle text-muted">Total Kehadiran Bulanan (2025).</p>
+                </div>
+                <div class="card-body">
+                    <canvas id="presence-hr"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {{-- TABEL RINGKASAN TUGAS --}}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Latest Tasks Summary</h4>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-lg">
+                            <thead>
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Detail</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($tasks as $task)
+                                <tr>
+                                    <td class="col-3">
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar avatar-md">
+                                                <img src="https://ui-avatars.com/api/?name={{ $task->employee->fullname }}&background=random">
+                                            </div>
+                                            <p class="font-bold ms-3 mb-0">{{ $task->employee->fullname }}</p>
+                                        </div>
+                                    </td>
+                                    <td class="col-auto">
+                                        <p class=" mb-0">{{ $task->title }}</p>
+                                    </td>
+                                    <td class="col-auto">
+                                        <p class=" mb-0">{{ ucfirst($task->status) }}</p>
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@push('scripts')
+{{-- Script untuk Kalender Tugas dan Chart Kehadiran --}}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // --- LOGIC KALENDER TUGAS (HR Manager) ---
+        const calendarContainerHR = document.getElementById('calendar-container-hr');
+        if (calendarContainerHR) {
+            // Ambil SEMUA data events (tanpa filter personal)
+            fetch('{{ route('tasks.events') }}')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Gagal memuat data tugas.');
+                    }
+                    return response.json();
+                })
+                .then(events => {
+                    // Inisialisasi Kalender
+                    new BSCalendar(calendarContainerHR, {
+                        events: events,
+                        startMonth: new Date().getMonth(),
+                        startYear: new Date().getFullYear(),
+                        weekStart: 1, 
+                        view: 'month'
+                    });
+                })
+                .catch(error => {
+                    console.error('Error in HR calendar initialization:', error);
+                    calendarContainerHR.innerHTML = `<div class="alert alert-danger">Gagal memuat kalender: ${error.message}</div>`;
+                });
+        }
+        
+        // --- LOGIC CHART KEHADIRAN (HR Manager) ---
+        if (document.getElementById('presence-hr')) {
+            var ctxBar = document.getElementById('presence-hr').getContext('2d');
+            var myBar = new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'],
+                    datasets: [{
+                        label: 'Total Kehadiran',
+                        data: [],
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Total Kehadiran Bulanan (2025)'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            suggestedMax: 30 // Maksimal jumlah hari kerja/hadir
+                        }
+                    }
+                }
+            });
+
+            function updateData() {
+                // Memanggil AJAX endpoint tanpa filter (semua karyawan)
+                fetch('{{ url("/dashboard/presence") }}') 
+                    .then(response => response.json())
+                    .then((output) => {
+                        if (output && Array.isArray(output) && output.length === 12) {
+                            myBar.data.datasets[0].data = output;
+                            myBar.update();
+                        } else {
+                            console.error("Data kehadiran yang diterima dari server tidak valid:", output);
+                            myBar.data.datasets[0].data = Array(12).fill(0);
+                            myBar.update();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Fetch error:', error);
+                    });
+            }
+            updateData();
+        }
+    });
+</script>
+@endpush
+@endsection
+
+=== FILE: resources/views\dashboard\index.blade.php ===
+
+@extends('layouts.dashboard')
+
+@section('content')
+<header class="mb-3">
+    <a href="#" class="burger-btn d-block d-xl-none">
+        <i class="bi bi-justify fs-3"></i>
+    </a>
+</header>
+
+<div class="page-heading">
+    <h3>Dashboard</h3>
+</div>
+<div class="page-content">
+    <div class="row">
+        <div class="col-6 col-lg-3 col-md-6">
+            <div class="card">
+                <div class="card-body px-4 py-4-5">
+                    <div class="row">
+                        <div class="col-md-4 col-lg-12 col-xl-12 col-xxl-5 d-flex justify-content-start ">
+                            <div class="stats-icon purple mb-2">
+                                <i class="icon dripicons dripicons-tag"></i>
+                            </div>
+                        </div>
+                        <div class="col-md-8 col-lg-12 col-xl-12 col-xxl-7">
+                            <h6 class="text-muted font-semibold">Departments</h6>
+                            <h6 class="font-extrabold mb-0">{{ $department }}</h6>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3 col-md-6">
+            <div class="card">
+                <div class="card-body px-4 py-4-5">
+                    <div class="row">
+                        <div class="col-md-4 col-lg-12 col-xl-12 col-xxl-5 d-flex justify-content-start ">
+                            <div class="stats-icon blue mb-2">
+                                <i class="icon dripicons dripicons-user"></i>
+                            </div>
+                        </div>
+                        <div class="col-md-8 col-lg-12 col-xl-12 col-xxl-7">
+                            <h6 class="text-muted font-semibold">Employees</h6>
+                            <h6 class="font-extrabold mb-0">{{ $employee }}</h6>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3 col-md-6">
+            <div class="card">
+                <div class="card-body px-4 py-4-5">
+                    <div class="row">
+                        <div class="col-md-4 col-lg-12 col-xl-12 col-xxl-5 d-flex justify-content-start ">
+                            <div class="stats-icon green mb-2">
+                                <i class="icon dripicons dripicons-alarm"></i>
+                            </div>
+                        </div>
+                        <div class="col-md-8 col-lg-12 col-xl-12 col-xxl-7">
+                            <h6 class="text-muted font-semibold">Presence</h6>
+                            <h6 class="font-extrabold mb-0">{{ $presence }}</h6>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3 col-md-6">
+            <div class="card">
+                <div class="card-body px-4 py-4-5">
+                    <div class="row">
+                        <div class="col-md-4 col-lg-12 col-xl-12 col-xxl-5 d-flex justify-content-start ">
+                            <div class="stats-icon red mb-2">
+                                <i class="icon dripicons dripicons-to-do"></i>
+                            </div>
+                        </div>
+                        <div class="col-md-8 col-lg-12 col-xl-12 col-xxl-7">
+                            <h6 class="text-muted font-semibold">Salary</h6>
+                            <h6 class="font-extrabold mb-0">{{ $salary }}</h6>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Latest Presence</h4>
+                </div>
+                <div class="card-body">
+                    <canvas id="presence"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Latest Tasks</h4>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-lg">
+                            <thead>
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Detail</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($tasks as $task)
+                                <tr>
+                                    <td class="col-3">
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar avatar-md">
+                                                <img src="https://ui-avatars.com/api/?name={{ $task->employee->fullname }}&background=random">
+                                            </div>
+                                            <p class="font-bold ms-3 mb-0">{{ $task->employee->fullname }}</p>
+                                        </div>
+                                    </td>
+                                    <td class="col-auto">
+                                        <p class=" mb-0">{{ $task->title }}</p>
+                                    </td>
+                                    <td class="col-auto">
+                                        <p class=" mb-0">{{ ucfirst($task->status) }}</p>
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@endsection
 
 
-    <script src="{{ asset('template/dist/assets/compiled/js/app.js') }}"></script>
-
-    {{-- --- START: Penambahan Aset Kalender --- --}}
-    {{-- Load JS Kalender (INI YANG HILANG!) --}}
-    <script src="{{ asset('interactive-bs-event-calenda/dist/bs-calendar.min.js') }}"></script> 
-    {{-- --- END: Penambahan Aset Kalender --- --}}
-
-    <!-- Need: Apexcharts -->
-    <script src="{{ asset('template/dist/assets/extensions/apexcharts/apexcharts.min.js') }}"></script>
-    <script src="{{ asset('template/dist/assets/static/js/pages/dashboard.js') }}"></script>
-
-    <script src="{{ asset('template/dist/assets/extensions/simple-datatables/umd/simple-datatables.js') }}"></script>
-    <script src="{{ asset('template/dist/assets/static/js/pages/simple-datatables.js') }}"></script>
-
-    <!-- Need: chartJs -->
-    <script src="{{ asset('template/dist/assets/extensions/chart.js/chart.umd.js') }}"></script>
-
-    <!-- Need : buat tanggal-->
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    @stack('scripts') {{-- PASTI ADA INI DI BAWAH! --}}
-
-</body>
-
-</html>
 
 === FILE: resources/views\departments\create.blade.php ===
 
@@ -3657,8 +4359,18 @@ $classes = ($active ?? false)
             </div>
             <div class="card-body">
 
-                <div class="d-flex">
-                    <a href="{{ route('employees.create')}}" class="btn btn-primary mb-3 ms-auto">New employee</a>
+                {{-- PERUBAHAN: TAMBAH TOMBOL EXPORT --}}
+                <div class="d-flex justify-content-between">
+                    {{-- TOMBOL EXPORT BARU --}}
+                    @can('employee_manage')
+                    <a href="{{ route('export.employees') }}" class="btn btn-success mb-3 me-2">
+                        <i class="bi bi-file-earmark-excel"></i> Export Excel
+                    </a>
+                    @endcan
+                    {{-- TOMBOL CREATE LAMA --}}
+                    @can('employee_manage')
+                    <a href="{{ route('employees.create')}}" class="btn btn-primary mb-3">New employee</a>
+                    @endcan
                 </div>
 
                 @if(session('success'))
@@ -3869,9 +4581,6 @@ $classes = ($active ?? false)
     <link rel="shortcut icon"
         href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACEAAAAiCAYAAADRcLDBAAAEs2lUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4KPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iWE1QIENvcmUgNS41LjAiPgogPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4KICA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIgogICAgeG1sbnM6ZXhpZj0iaHR0cDovL25zLmFkb2JlLmNvbS9leGlmLzEuMC8iCiAgICB4bWxuczp0aWZmPSJodHRwOi8vbnMuYWRvYmUuY29tL3RpZmYvMS4wLyIKICAgIHhtbG5zOnBob3Rvc2hvcD0iaHR0cDovL25zLmFkb2JlLmNvbS9waG90b3Nob3AvMS4wLyIKICAgIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIKICAgIHhtbG5zOnhtcE1NPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvbW0vIgogICAgeG1sbnM6c3RFdnQ9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZUV2ZW50IyIKICAgIGV4aWY6UGl4ZWxYRGltZW5zaW9uPSIzMyIKICAgIGV4aWY6UGl4ZWxZRGltZW5zaW9uPSIzNCIKICAgIGV4aWY6Q29sb3JTcGFjZT0iMSIKICAgIHRpZmY6SW1hZ2VXaWR0aD0iMzMiCiAgIHRpZmY6SW1hZ2VMZW5ndGg9IjM0IgogICB0aWZmOlJlc29sdXRpb25Vbml0PSIzIgogICB0aWZmOlhSZXNvbHV0aW9uPSI5Ni4wIgogICB0aWZmOllSZXNvbHV0aW9uPSI5Ni4wIgogICBwaG90b3Nob3A6Q29sb3JNb2RlPSIzIgogICBwaG90b3Nob3A6SUNDUHJvZmlsZT0ic1JHQiBJRUM2MTk2Ni0yLjEiCiAgIHhtcDpNb2RpZnlEYXRlPSIyMDIyLTAzLTMxVDEwOjUwOjIzKzAyOjAwIgogICB4bXA6TWV0YWRhdGFEYXRlPSIyMDIyLTAzLTMxVDEwOjUwOjIzKzAyOjAwIj4KICAgPHhtcE1NOkhpc3Rvcnk+CiAgICA8cmRmOlNlcT4KICAgICA8cmRmOmxpCiAgICAgICBzdEV2dDphY3Rpb249InByb2R1Y2VkIgogICAgICAgc3RFdnQ6c29mdHdhcmVBZ2VudD0iQWZmaW5pdHkgRGVzaWduZXIgMS4xMC4xIgogICAgICAgc3RFdnQ6d2hlbj0iMjAyMi0wMy0zMVQxMDo1MDo0MiswMjowMCIvPgogICAgIDwvcmRmOlNlcT4KICAgIDwveG1wTU06SGlzdG9yeT4KICA8L3JkZjpEZXNjcmlwdGlvbj4KIDwvcmRmOlJERj4KPC94OnhtcG1ldGE+Cjw/eHBhY2tldCBlbmQ9InIiPz5V57uAAAABgmlDQ1BzUkdCIElFQzYxOTY2LTIuMQAAKJF1kc8rRFEUxz9maORHo1hYKC9hISNGTWwsRn4VFmOUX5uZZ36oeTOv954kW2WrKLHxa8FfwFZZK0WkZClrYoOe87ypmWTO7dzzud97z+nec8ETzaiaWd4NWtYyIiNhZWZ2TvE946WZSjqoj6mmPjE1HKWkfdxR5sSbgFOr9Ll/rXoxYapQVik8oOqGJTwqPL5i6Q5vCzeo6dii8KlwpyEXFL519LjLLw6nXP5y2IhGBsFTJ6ykijhexGra0ITl5bRqmWU1fx/nJTWJ7PSUxBbxJkwijBBGYYwhBgnRQ7/MIQIE6ZIVJfK7f/MnyUmuKrPOKgZLpEhj0SnqslRPSEyKnpCRYdXp/9++msneoFu9JgwVT7b91ga+LfjetO3PQ9v+PgLvI1xkC/m5A+h7F32zoLXug38dzi4LWnwHzjeg8UGPGbFfySvuSSbh9QRqZ6H+Gqrm3Z7l9zm+h+iafNUV7O5Bu5z3L/wAdthn7QIme0YAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAJTSURBVFiF7Zi9axRBGIefEw2IdxFBRQsLWUTBaywSK4ubdSGVIY1Y6HZql8ZKCGIqwX/AYLmCgVQKfiDn7jZeEQMWfsSAHAiKqPiB5mIgELWYOW5vzc3O7niHhT/YZvY37/swM/vOzJbIqVq9uQ04CYwCI8AhYAlYAB4Dc7HnrOSJWcoJcBS4ARzQ2F4BZ2LPmTeNuykHwEWgkQGAet9QfiMZjUSt3hwD7psGTWgs9pwH1hC1enMYeA7sKwDxBqjGnvNdZzKZjqmCAKh+U1kmEwi3IEBbIsugnY5avTkEtIAtFhBrQCX2nLVehqyRqFoCAAwBh3WGLAhbgCRIYYinwLolwLqKUwwi9pxV4KUlxKKKUwxC6ZElRCPLYAJxGfhSEOCz6m8HEXvOB2CyIMSk6m8HoXQTmMkJcA2YNTHm3congOvATo3tE3A29pxbpnFzQSiQPcB55IFmFNgFfEQeahaAGZMpsIJIAZWAHcDX2HN+2cT6r39GxmvC9aPNwH5gO1BOPFuBVWAZue0vA9+A12EgjPadnhCuH1WAE8ivYAQ4ohKaagV4gvxi5oG7YSA2vApsCOH60WngKrA3R9IsvQUuhIGY00K4flQG7gHH/mLytB4C42EgfrQb0mV7us8AAMeBS8mGNMR4nwHamtBB7B4QRNdaS0M8GxDEog7iyoAguvJ0QYSBuAOcAt71Kfl7wA8DcTvZ2KtOlJEr+ByyQtqqhTyHTIeB+ONeqi3brh+VgIN0fohUgWGggizZFTplu12yW8iy/YLOGWMpDMTPXnl+Az9vj2HERYqPAAAAAElFTkSuQmCC"
         type="image/png">
-    <link rel="shortcut icon"
-        href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACEAAAAiCAYAAADRcLDBAAAEs2lUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4KPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iWE1QIENvcmUgNS41LjAiPgogPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4KICA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIgogICAgeG1sbnM6ZXhpZj0iaHR0cDovL25zLmFkb2JlLmNvbS9leGlmLzEuMC8iCiAgICB4bWxuczp0aWZmPSJodHRwOi8vbnMuYWRvYmUuY29tL3RpZmYvMS4wLyIKICAgIHhtbG5zOnBob3Rvc2hvcD0iaHR0cDovL25zLmFkb2JlLmNvbS9waG90b3Nob3AvMS4wLyIKICAgIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIKICAgIHhtbG5zOnhtcE1NPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvbW0vIgogICAgeG1sbnM6c3RFdnQ9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZUV2ZW50IyIKICAgIGV4aWY6UGl4ZWxYRGltZW5zaW9uPSIzMyIKICAgIGV4aWY6UGl4ZWxZRGltZW5zaW9uPSIzNCIKICAgIGV4aWY6Q29sb3JTcGFjZT0iMSIKICAgIHRpZmY6SW1hZ2VXaWR0aD0iMzMiCiAgIHRpZmY6SW1hZ2VMZW5ndGg9IjM0IgogICB0aWZmOlJlc29sdXRpb25Vbml0PSIzIgogICB0aWZmOlhSZXNvbHV0aW9uPSI5Ni4wIgogICB0aWZmOllSZXNvbHV0aW9uPSI5Ni4wIgogICBwaG90b3Nob3A6Q29sb3JNb2RlPSIzIgogICBwaG90b3Nob3A6SUNDUHJvZmlsZT0ic1JHQiBJRUM2MTk2Ni0yLjEiCiAgIHhtcDpNb2RpZnlEYXRlPSIyMDIyLTAzLTMxVDEwOjUwOjIzKzAyOjAwIgogICB4bXA6TWV0YWRhdGFEYXRlPSIyMDIyLTAzLTMxVDEwOjUwOjIzKzAyOjAwIj4KICAgPHhtcE1NOkhpc3Rvcnk+CiAgICA8cmRmOlNlcT4KICAgICA8cmRmOmxpCiAgICAgICBzdEV2dDphY3Rpb249InByb2R1Y2VkIgogICAgICAgc3RFdnQ6c29mdHdhcmVBZ2VudD0iQWZmaW5pdHkgRGVzaWduZXIgMS4xMC4xIgogICAgICAgc3RFdnQ6d2hlbj0iMjAyMi0wMy0zMVQxMDo1MDo0MiswMjowMCIvPgogICAgIDwvcmRmOlNlcT4KICAgIDwveG1wTU06SGlzdG9yeT4KICA8L3JkZjpEZXNjcmlwdGlvbj4KIDwvcmRmOlJERj4KPC94OnhtcG1ldGE+Cjw/eHBhY2tldCBlbmQ9InIiPz5V57uAAAABgmlDQ1BzUkdCIElFQzYxOTY2LTIuMQAAKJF1kc8rRFEUxz9maORHo1hYKC9hISNGTWwsRn4VFmOUX5uZZ36oeTOv954kW2WrKLHxa8FfwFZZK0WkZClrYoOe87ypmWTO7dzzud97z+nec8ETzaiaWd4NWtYyIiNhZWZ2TvE946WZSjqoj6mmPjE1HKWkfdxR5sSbgFOr9Ll/rXoxYapQVik8oOqGJTwqPL5i6Q5vCzeo6dii8KlwpyEXFL519LjLLw6nXP5y2IhGBsFTJ6ykijhexGra0ITl5bRqmWU1fx/nJTWJ7PSUxBbxJkwijBBGYYwhBgnRQ7/MIQIE6ZIVJfK7f/MnyUmuKrPOKgZLpEhj0SnqslRPSEyKnpCRYdXp/9++msneoFu9JgwVT7b91ga+LfjetO3PQ9v+PgLvI1xkC/m5A+h7F32zoLXug38dzi4LWnwHzjeg8UGPGbFfySvuSSbh9QRqZ6H+Gqrm3Z7l9zm+h+iafNUV7O5Bu5z3L/wAdthn7QIme0YAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAJTSURBVFiF7Zi9axRBGIefEw2IdxFBRQsLWUTBaywSK4ubdSGVIY1Y6HZql8ZKCGIqwX/AYLmCgVQKfiDn7jZeEQMWfsSAHAiKqPiB5mIgELWYOW5vzc3O7niHhT/YZvY37/swM/vOzJbIqVq9uQ04CYwCI8AhYAlYAB4Dc7HnrOSJWcoJcBS4ARzQ2F4BZ2LPmTeNuykHwEWgkQGAet9QfiMZjUSt3hwD7psGTWgs9pwH1hC1enMYeA7sKwDxBqjGnvNdZzKZjqmCAKh+U1kmEwi3IEBbIsugnY5avTkEtIAtFhBrQCX2nLVehqyRqFoCAAwBh3WGLAhbgCRIYYinwLolwLqKUwwi9pxV4KUlxKKKUwxC6ZElRCPLYAJxGfhSEOCz6m8HEXvOB2CyIMSk6m8HoXQTmMkJcA2YNTHm3congOvATo3tE3A29pxbpnFzQSiQPcB55IFmFNgFfEQeahaAGZMpsIJIAZWAHcDX2HN+2cT6r39GxmvC9aPNwH5gO1BOPFuBVWAZue0vA9+A12EgjPadnhCuH1WAE8ivYAQ4ohKaagV4gvxi5oG7YSA2vApsCOH60WngKrA3R9IsvQUuhIGY00K4flQG7gHH/mLytB4C42EgfrQb0mV7us8AAMeBS8mGNMR4nwHamtBB7B4QRNdaS0M8GxDEog7iyoAguvJ0QYSBuAOcAt71Kfl7wA8DcTvZ2KtOlJEr+ByyQtqqhTyHTIeB+ONeqi3brh+VgIN0fohUgWGggizZFTplu12yW8iy/YLOGWMpDMTPXnl+Az9vj2HERYqPAAAAAElFTkSuQmCC"
-        type="image/png">
     <link rel="stylesheet" href="{{ asset('template/dist/assets/compiled/css/app.css') }}">
     <link rel="stylesheet" href="{{ asset('template/dist/assets/compiled/css/app-dark.css') }}">
     <link rel="stylesheet" href="{{ asset('template/dist/assets/compiled/css/iconly.css') }}">
@@ -3923,7 +4632,7 @@ $classes = ($active ?? false)
                                 aria-hidden="true" role="img" class="iconify iconify--mdi" width="20" height="20"
                                 preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
                                 <path fill="currentColor"
-                                    d="m17.75 4.09l-2.53 1.94l.91 3.06l-2.63-1.81l-2.63 1.81l.91-3.06l-2.53-1.94L12.44 4l1.06-3l1.06 3l3.19.09m3.5 6.91l-1.64 1.25l.59 1.98l-1.7-1.17l-1.7 1.17l.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95l2.06.05m-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85c-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14c.4-.4.82-.76 1.27-1.08c.75-.53 1.93.36 1.85 1.19c-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82c-2.81 3.14-2.7 7.96.31 10.98c3.02 3.01 7.84 3.12 10.98.31z">
+                                    d="m17.75 4.09l-2.53 1.94l.91 3.06l-2.63-1.81l-2.63 1.81l.91-3.06l-2.53-1.94L12.44 4l1.06-3l1.06 3l3.19.09m3.5 6.91l-1.64 1.25l.59 1.98l-1.7-1.17l-1.7 1.17l.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95l2.06.05m-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85c-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14c.4-.4.82-.76 1.27-1.08c.75-.53 1.93.36 1.85 1.19c-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82c-2.81 3.14-2.7 7.96.31 10.98c3.02 3.01 7.84 3.12 10.98.31Z">
                                 </path>
                             </svg>
                         </div>
@@ -4106,28 +4815,6 @@ $classes = ($active ?? false)
 </body>
 
 </html>
-```
-
-### 🚨 Kenapa Error `tasks.calendar` Masih Muncul?
-
-Kamu benar, errornya masih muncul, tapi bukan di `dashboard.blade.php`. Errornya ada di:
-
-`resources\views\dashboard\index.blade.php:109`
-
-Ini berarti errornya ada di **halaman Dashboard utama** yang kamu lihat sekarang! Coba kita cek kode di baris `109` di file Dashboard View (GABUNGAN) yang terakhir kamu kirimkan:
-
-```html
-//resources/views/dashboard/index.blade.php
-// ...
-@can('task_view')
-<li class="submenu-item {{ request()->is('tasks/calendar') ? 'active' : '' }}">
-    <a href="{{ route('tasks.calendar') }}" class="submenu-link">  // <--- INI LINE 109
-        <i class="bi bi-calendar-check"></i>
-        <span>Task Calendar</span>
-    </a>
-</li>
-@endcan
-// ...
 
 === FILE: resources/views\layouts\guest.blade.php ===
 
@@ -5304,8 +5991,18 @@ Ini berarti errornya ada di **halaman Dashboard utama** yang kamu lihat sekarang
             </div>
             <div class="card-body">
 
-                <div class="d-flex">
+                {{-- PERUBAHAN: TAMBAH TOMBOL EXPORT --}}
+                <div class="d-flex justify-content-between">
+                    {{-- TOMBOL EXPORT BARU (Hanya untuk Admin/HR) --}}
+                    @can('presence_view_all')
+                    <a href="{{ route('export.presences') }}" class="btn btn-success mb-3 me-2">
+                        <i class="bi bi-file-earmark-excel"></i> Export Excel
+                    </a>
+                    @endcan
+                    {{-- TOMBOL CREATE LAMA (Hanya untuk Karyawan) --}}
+                    @can('presence_create')
                     <a href="{{ route('presences.create')}}" class="btn btn-primary mb-3 ms-auto">New Presence</a>
+                    @endcan
                 </div>
 
                 @if(session('success'))
@@ -5320,7 +6017,7 @@ Ini berarti errornya ada di **halaman Dashboard utama** yang kamu lihat sekarang
                             <th>Check out</th>
                             <th>Date</th>
                             <th>Status</th>
-                        
+                            
                             @can('presence_view_all')
                             <th>Actions</th>
                             @endcan
@@ -6477,6 +7174,7 @@ use App\Http\Controllers\PresenceController;
 use App\Http\Controllers\SalaryController;
 use App\Http\Controllers\LeaveRequestController;
 use App\Http\Controllers\RolePermissionController;
+use App\Http\Controllers\ExportController; // <-- BARIS INI DITAMBAHKAN
 
 Route::get('captcha-image', function () {
     return captcha_img('flat');
@@ -6493,14 +7191,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard/presence', [DashboardController::class, 'presence']); 
     
     // --- TASK CALENDAR DATA ROUTE (Dipakai oleh Dashboard Index) ---
-    // Route ini TIDAK DIHAPUS karena dibutuhkan oleh AJAX di Dashboard
     Route::get('/tasks/events', [TaskController::class, 'getEvents'])->name('tasks.events'); 
 
-    // --- TASK CALENDAR VIEW ROUTE (DIHAPUS, karena Kalender sudah pindah ke Dashboard) ---
-    // TIDAK PERLU ADA DI SINI
-
+    // --- EXPORT ROUTES (BARU DITAMBAHKAN) ---
+    // Hanya user dengan izin 'employee_manage' (HR Manager) yang boleh export data karyawan
+    Route::get('/export/employees', [ExportController::class, 'exportEmployees'])->name('export.employees')->middleware(['permission:employee_manage']);
+    // Hanya user dengan izin 'presence_view_all' (HR Manager/Accounting) yang boleh export data kehadiran
+    Route::get('/export/presences', [ExportController::class, 'exportPresences'])->name('export.presences')->middleware(['permission:presence_view_all']);
+    
     // --- TASK CRUD ROUTES ---
-    // Kita panggil ulang resource tasks, karena tadi di atas dihalangi oleh Route::get('/tasks/calendar')
     Route::resource('tasks', TaskController::class)->only(['index', 'show']);
     Route::middleware('permission:task_create')->group(function () {
         Route::get('/tasks/create', [TaskController::class, 'create'])->name('tasks.create');
@@ -7166,127 +7865,32 @@ class HumanResourceSeeder extends Seeder
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
         DB::table('departments')->insert([
-            [
-                'name' => 'Human Resources',
-                'description' => 'Manajemen SDM',
-                'status' => 'active',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Technology',
-                'description' => 'Departemen IT & Tech',
-                'status' => 'active',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Sales & Marketing',
-                'description' => 'Pemasaran dan Penjualan',
-                'status' => 'active',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Finance & Accounting',
-                'description' => 'Keuangan dan Akuntansi',
-                'status' => 'active',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Operation',
-                'description' => 'Operasional Bisnis',
-                'status' => 'active',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
+            ['name' => 'Human Resources', 'description' => 'Manajemen SDM', 'status' => 'active', 'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'Technology', 'description' => 'Departemen IT & Tech', 'status' => 'active', 'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'Sales & Marketing', 'description' => 'Pemasaran dan Penjualan', 'status' => 'active', 'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'Finance & Accounting', 'description' => 'Keuangan dan Akuntansi', 'status' => 'active', 'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'Operation', 'description' => 'Operasional Bisnis', 'status' => 'active', 'created_at' => now(), 'updated_at' => now()],
         ]);
 
         DB::table('positions')->insert([
-            [
-                'title' => 'HR Manager',
-                'description' => 'Manajer HR',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'title' => 'Developer',
-                'description' => 'Pengembang Kode',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'title' => 'Sales',
-                'description' => 'Penjualan',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'title' => 'Accounting',
-                'description' => 'Staf Keuangan',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'title' => 'Supervisor',
-                'description' => 'Supervisor Operasional',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
+            ['title' => 'HR Manager', 'description' => 'Manajer HR', 'created_at' => now(), 'updated_at' => now()],
+            ['title' => 'Developer', 'description' => 'Pengembang Kode', 'created_at' => now(), 'updated_at' => now()],
+            ['title' => 'Sales', 'description' => 'Penjualan', 'created_at' => now(), 'updated_at' => now()],
+            ['title' => 'Accounting', 'description' => 'Staf Keuangan', 'created_at' => now(), 'updated_at' => now()],
+            ['title' => 'Supervisor', 'description' => 'Supervisor Operasional', 'created_at' => now(), 'updated_at' => now()],
         ]);
 
         $employeesData = [
-            [
-                'id' => 1,
-                'user_name' => 'Asep HR',
-                'user_email' => 'kaztztl@gmail.com',
-                'position_id' => 1, 
-                'department_id' => 1,
-                'fullname' => 'Asep Santoso',
-                'status' => 'active',
-                'salary' => 12500000.00
-            ],
-            [
-                'id' => 2,
-                'user_name' => 'Joko IT',
-                'user_email' => 'jokoit@gmail.com',
-                'position_id' => 2, 
-                'department_id' => 2,
-                'fullname' => 'Joko Pramono',
-                'status' => 'active',
-                'salary' => 15000000.00
-            ],
-            [
-                'id' => 3,
-                'user_name' => 'Denis Sales',
-                'user_email' => 'denissales@gmail.com',
-                'position_id' => 3, 
-                'department_id' => 3,
-                'fullname' => 'Denis Saputra',
-                'status' => 'active',
-                'salary' => 9500000.00
-            ],
-            [
-                'id' => 4,
-                'user_name' => 'Bobby Finance',
-                'user_email' => 'bobbyfinance@gmail.com',
-                'position_id' => 4, 
-                'department_id' => 4,
-                'fullname' => 'Bobby Karta',
-                'status' => 'active',
-                'salary' => 8000000.00
-            ],
-            [
-                'id' => 5,
-                'user_name' => 'Udin Dev',
-                'user_email' => 'udin.dev@gmail.com',
-                'position_id' => 2, 
-                'department_id' => 2,
-                'fullname' => 'Udin Wijaksono',
-                'status' => 'inactive',
-                'salary' => 11000000.00
-            ],
+            // HR Manager
+            ['id' => 1, 'user_name' => 'Asep HR', 'user_email' => 'kaztztl@gmail.com', 'position_id' => 1, 'department_id' => 1, 'fullname' => 'Asep Santoso', 'status' => 'active', 'salary' => 12500000.00],
+            // Developer
+            ['id' => 2, 'user_name' => 'Joko IT', 'user_email' => 'jokoit@gmail.com', 'position_id' => 2, 'department_id' => 2, 'fullname' => 'Joko Pramono', 'status' => 'active', 'salary' => 15000000.00],
+            // Sales
+            ['id' => 3, 'user_name' => 'Denis Sales', 'user_email' => 'denissales@gmail.com', 'position_id' => 3, 'department_id' => 3, 'fullname' => 'Denis Saputra', 'status' => 'active', 'salary' => 9500000.00],
+            // Accounting
+            ['id' => 4, 'user_name' => 'Bobby Finance', 'user_email' => 'bobbyfinance@gmail.com', 'position_id' => 4, 'department_id' => 4, 'fullname' => 'Bobby Karta', 'status' => 'active', 'salary' => 8000000.00],
+            // Inactive / Test User
+            ['id' => 5, 'user_name' => 'Udin Dev', 'user_email' => 'udin.dev@gmail.com', 'position_id' => 2, 'department_id' => 2, 'fullname' => 'Udin Wijaksono', 'status' => 'inactive', 'salary' => 11000000.00],
         ];
 
         foreach ($employeesData as $data) {
@@ -7300,12 +7904,7 @@ class HumanResourceSeeder extends Seeder
                 'birth_date' => $faker->dateTimeBetween('-40 years', '-25 years'),
                 'hire_date' => $now->copy()->subMonths(rand(6, 60)),
                 'department_id' => $data['department_id'],
-                
-                // --- PERUBAHAN 4 ---
-                // Mengganti kolom 'role_id' menjadi 'position_id'
-                // dan mengambil data dari key 'position_id'
                 'position_id' => $data['position_id'], 
-                
                 'status' => $data['status'],
                 'salary' => $data['salary'],
                 'created_at' => $now,
@@ -7325,7 +7924,51 @@ class HumanResourceSeeder extends Seeder
 
         $employeeIds = [1, 2, 3, 4, 5];
         $activeEmployeeIds = [1, 2, 3, 4];
-        $numPresencesPerEmployee = 20;
+        $year = 2025;
+        $now = now();
+
+        // --- PRESENCES (Lebih Bervariasi) ---
+        foreach ($activeEmployeeIds as $id) {
+            for ($month = 1; $month <= 12; $month++) {
+                $daysInMonth = Carbon::create($year, $month, 1)->daysInMonth;
+                for ($day = 1; $day <= $daysInMonth; $day++) {
+                    $date = Carbon::create($year, $month, $day);
+
+                    if (!$date->isWeekday()) continue;
+
+                    $statusOptions = ['present', 'present', 'present', 'absent', 'leave']; // 3/5 hadir
+                    $status = $statusOptions[array_rand($statusOptions)];
+
+                    $checkIn = null;
+                    $checkOut = null;
+                    $latitude = null;
+                    $longitude = null;
+
+                    if ($status == 'present') {
+                        $checkIn = $date->copy()->setTime(8, rand(0, 15), 0);
+                        $checkOut = $date->copy()->setTime(17, rand(0, 30), 0);
+                        // Dummy GPS for testing presence logic
+                        $latitude = $faker->latitude(-6.89, -6.90); 
+                        $longitude = $faker->longitude(107.61, 107.62); 
+                    }
+                    
+                    if ($status != 'present' && rand(1, 100) > 80) continue; // Skip beberapa absen/cuti agar data tidak terlalu padat
+
+                    DB::table('presences')->insert([
+                        'employee_id' => $id,
+                        'date' => $date->format('Y-m-d'),
+                        'check_in' => $checkIn,
+                        'check_out' => $checkOut,
+                        'status' => $status,
+                        'latitude' => $latitude,
+                        'longitude' => $longitude,
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ]);
+                }
+            }
+        }
+        // -------------------------------------
 
         DB::table('tasks')->insert([
             [
@@ -7391,32 +8034,6 @@ class HumanResourceSeeder extends Seeder
                 'created_at' => $now,
                 'updated_at' => $now,
             ]);
-        }
-
-        $year = 2025;
-
-        foreach ($employeeIds as $id) {
-            if (in_array($id, $activeEmployeeIds)) {
-                for ($j = 0; $j < $numPresencesPerEmployee; $j++) {
-                    $randomMonth = rand(1, 12);
-                    $daysInMonth = Carbon::create($year, $randomMonth, 1)->daysInMonth;
-                    $randomDay = rand(1, $daysInMonth);
-                    $date = Carbon::create($year, $randomMonth, $randomDay);
-
-                    if (!$date->isWeekday()) continue;
-
-                    $now = now();
-                    DB::table('presences')->insert([
-                        'employee_id' => $id,
-                        'date' => $date,
-                        'check_in' => $date->copy()->setTime(8, rand(0, 15), 0),
-                        'check_out' => $date->copy()->setTime(17, rand(0, 30), 0),
-                        'status' => 'present',
-                        'created_at' => $now,
-                        'updated_at' => $now,
-                    ]);
-                }
-            }
         }
 
         DB::table('leave_requests')->insert([
@@ -7693,6 +8310,7 @@ VITE_APP_NAME="${APP_NAME}"
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
         "mews/captcha": "^3.4",
+        "phpoffice/phpspreadsheet": "^5.3",
         "spatie/laravel-permission": "^6.23"
     },
     "require-dev": {
@@ -7710,7 +8328,10 @@ VITE_APP_NAME="${APP_NAME}"
             "App\\": "app/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
-        }
+        },
+        "files": [                      
+            "app/Helpers/UrlHelper.php" 
+        ]                               
     },
     "autoload-dev": {
         "psr-4": {
@@ -7758,7 +8379,6 @@ VITE_APP_NAME="${APP_NAME}"
     "minimum-stability": "dev",
     "prefer-stable": true
 }
-
 
 === FILE: package.json ===
 

@@ -10,45 +10,68 @@ use App\Models\Presence;
 use App\Models\Task;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        $employee = Employee::count();
-        $department = Department::count();
-        $salary = Salary::count();
-        $presence = Presence::count();
+        $user = Auth::user();
         
-        // Mengambil tugas untuk ditampilkan di tabel ringkasan
-        $tasks = Task::with('employee')->limit(5)->get(); 
+        // Memastikan method role tersedia
+        $isHRManager = $user->hasRole('HR Manager');
 
-        return view('dashboard.index', compact('employee', 'department', 'salary', 'presence', 'tasks'));
+        if ($isHRManager) {
+            // HR MANAGER DASHBOARD (All Data)
+            $employee = Employee::count();
+            $department = Department::count();
+            $salary = Salary::count();
+            $presence = Presence::count();
+            
+            $tasks = Task::with('employee')->limit(5)->get(); 
+
+            // Akan memanggil resources/views/dashboard/hr_dashboard.blade.php
+            return view('dashboard.index', compact('employee', 'department', 'salary', 'presence', 'tasks', 'isHRManager'));
+            
+        } else {
+            // EMPLOYEE DASHBOARD (Personal Data)
+            $user_role = $user->getRoleNames()->first() ?? 'Employee';
+            
+            $tasks_pending = Task::where('assigned_to', $user->employee_id)
+                                 ->where('status', 'pending')
+                                 ->count();
+            
+            // Akan memanggil resources/views/dashboard/employee_dashboard.blade.php
+            return view('dashboard.index', compact('user_role', 'tasks_pending', 'isHRManager'));
+        }
     }
 
     /**
-     * MENGEMBALIKAN FUNGSI PRESENCE (AJAX endpoint untuk Chart.js).
+     * AJAX endpoint untuk Chart.js. Sekarang mendukung filter Personal.
      */
-    public function presence()
+    public function presence(Request $request)
     {
-        $targetYear = 2025; 
+        $targetYear = 2025;
+        $query = Presence::where('status', 'present')->whereYear('date', $targetYear);
         
-        // Query untuk mengambil total kehadiran per bulan
-        $rawMonthlyData = DB::select("
-            SELECT MONTH(date) as month, COUNT(*) as total
-            FROM presences
-            WHERE status = 'present' AND YEAR(date) = ?
-            GROUP BY MONTH(date)
-            ORDER BY MONTH(date) ASC
-        ", [$targetYear]);
+        if ($request->get('employee')) {
+            $query->where('employee_id', Auth::user()->employee_id);
+        }
+
+        $rawMonthlyData = $query
+            ->select(DB::raw('MONTH(date) as month'), DB::raw('COUNT(*) as total'))
+            ->groupBy(DB::raw('MONTH(date)'))
+            ->orderBy(DB::raw('MONTH(date)'), 'ASC')
+            ->pluck('total', 'month')
+            ->toArray();
 
         $dataForChart = array_fill(0, 12, 0); 
         
-        foreach ($rawMonthlyData as $item) {
-            $monthIndex = $item->month - 1; 
+        foreach ($rawMonthlyData as $month => $total) {
+            $monthIndex = $month - 1; 
             
             if ($monthIndex >= 0 && $monthIndex < 12) {
-                $dataForChart[$monthIndex] = $item->total; 
+                $dataForChart[$monthIndex] = $total; 
             }
         }
 
