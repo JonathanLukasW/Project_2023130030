@@ -6,13 +6,8 @@ use App\Models\Employee;
 use Illuminate\Http\Request;
 use App\Models\Task;
 use Illuminate\Support\Facades\Auth;
-use App\Models\Department;
-use App\Models\Salary;
-use App\Models\Presence;
-use Illuminate\Support\Facades\Mail;
-use App\Mail\NewTaskNotification;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Log;      // <-- FIXED: Import Log Facade
+use Illuminate\Support\Facades\Log; // <-- PENTING: Tambahkan Log
 
 class TaskController extends Controller
 {
@@ -29,7 +24,6 @@ class TaskController extends Controller
         }
         
         $tasks = $baseQuery->get();
-
         $tasks = $tasks->sortBy(fn ($task) => $task->status === 'pending' ? 1 : 2)->values();
         
         return view('tasks.index', compact('tasks'));
@@ -38,9 +32,7 @@ class TaskController extends Controller
     public function getEvents(Request $request)
     {
         $isPersonalRequest = $request->has('personal') && Auth::check() && !Auth::user()->can('task_manage');
-
         $events = $this->getCalendarEvents($isPersonalRequest);
-        
         return response()->json($events);
     }
     
@@ -63,12 +55,10 @@ class TaskController extends Controller
             $events[] = [
                 'date' => $task->due_date, 
                 'title' => $task->title,
-                // Menggunakan helper encodeId()
                 'url' => route('tasks.show', encodeId($task->id)), 
                 'color' => $this->getEventColor($task->status), 
             ];
         }
-        
         return $events;
     }
     
@@ -86,7 +76,6 @@ class TaskController extends Controller
         if (!Auth::user()->can('task_create')) {
             abort(403, 'Unauthorized action.');
         }
-
         $employees = Employee::all();
         return view('tasks.create', compact('employees'));
     }
@@ -109,10 +98,9 @@ class TaskController extends Controller
         
         $task = Task::create($validated);
 
-        try {
-            // Mail::send(new NewTaskNotification($task));
-        } catch (\Exception $e) {
-             Log::error('Gagal mengirim notifikasi tugas baru: ' . $e->getMessage()); // <-- FIXED: Tanpa backslash
+        // Jika status langsung completed saat create, set completed_at
+        if ($task->status == 'completed') {
+            $task->update(['completed_at' => now()]);
         }
 
         return redirect()->route('tasks.index')->with('success', 'Task created successfully.');
@@ -144,13 +132,19 @@ class TaskController extends Controller
         
         $validated['due_date'] = Carbon::createFromFormat('Y-m-d\TH:i', $validated['due_date'])->format('Y-m-d H:i:s');
 
+        // Logic Update Status Manual
+        if ($validated['status'] == 'completed' && $task->status != 'completed') {
+            $validated['completed_at'] = now();
+        } elseif ($validated['status'] == 'pending') {
+            $validated['completed_at'] = null;
+        }
+
         $task->update($validated);
         return redirect()->route('tasks.index')->with('success', 'Task updated successfully.');
     }
 
     public function show(string $encodedId)
     {
-        // POIN 8: Dekripsi ID
         $taskId = decodeId($encodedId);
         if (!$taskId) {
             abort(404, 'Task not found.');
@@ -170,7 +164,13 @@ class TaskController extends Controller
         }
 
         $task = Task::findOrFail($id);
-        $task->update(['status' => 'completed']);
+        
+        // UPDATE BARU: Simpan waktu selesai
+        $task->update([
+            'status' => 'completed',
+            'completed_at' => now() 
+        ]);
+        
         return redirect()->route('tasks.index')->with('success', 'Task marked as done successfully');
     }
     
@@ -181,7 +181,13 @@ class TaskController extends Controller
         }
 
         $task = Task::findOrFail($id);
-        $task->update(['status' => 'pending']);
+        
+        // Kalau balik ke pending, completed_at dihapus
+        $task->update([
+            'status' => 'pending',
+            'completed_at' => null
+        ]);
+        
         return redirect()->route('tasks.index')->with('success', 'Task marked as pending successfully');
     }
 

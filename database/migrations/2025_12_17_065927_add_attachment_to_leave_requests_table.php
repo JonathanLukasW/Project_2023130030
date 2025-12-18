@@ -10,19 +10,16 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-{
-    Schema::table('users', function(Blueprint $table){
-        $table->foreignId('employee_id')->nullable()->after('id'); 
-    });
-}
+    {
+        Schema::table('leave_requests', function (Blueprint $table) {
+            $table->string('attachment')->nullable()->after('status');
+        });
+    }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        schema::table('users', function(Blueprint $table){
-            $table->dropColumn('employee_id');
+        Schema::table('leave_requests', function (Blueprint $table) {
+            $table->dropColumn('attachment');
         });
     }
 };

@@ -26,40 +26,35 @@
         </div>
     </div>
     <section class="section">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title">
-                    Create
-                </h5>
-            </div>
-            <div class="card-body">
-
-                <form action="{{ route('positions.store')}}" method="POST">
-                    @csrf
-
-                    <div class="mb-3">
-                        <label for="" class="form-label">Title</label>
-                        <input type="text" class="form-control" name="title" required>
-                        @error('title')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="" class="form-label">Description</label>
-                        <textarea name="description" class="form-control @error('description') is-invalid @enderror"></textarea>
-                        @error('description')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <button type="submit" class="btn btn-primary">Create position</button>
-                    <a href="{{ route('positions.index') }}" class="btn btn-secondary">Back</a>
-
-                </form>
-            </div>
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title">New Position</h5>
         </div>
+        <div class="card-body">
+            <form action="{{ route('positions.store')}}" method="POST">
+                @csrf
 
-    </section>
+                <div class="mb-3">
+                    <label for="" class="form-label">Title</label>
+                    <input type="text" class="form-control" name="title" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="" class="form-label">Description</label>
+                    <textarea name="description" class="form-control"></textarea>
+                </div>
+
+                {{-- INPUT GAJI POKOK --}}
+                <div class="mb-3">
+                    <label for="base_salary" class="form-label">Gaji Pokok (Base Salary)</label>
+                    <input type="number" class="form-control" name="base_salary" required placeholder="Contoh: 5000000">
+                </div>
+
+                <button type="submit" class="btn btn-primary">Create Position</button>
+                <a href="{{ route('positions.index') }}" class="btn btn-secondary">Back</a>
+            </form>
+        </div>
+    </div>
+</section>
 </div>
 @endsection

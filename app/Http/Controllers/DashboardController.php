@@ -30,19 +30,26 @@ class DashboardController extends Controller
             
             $tasks = Task::with('employee')->limit(5)->get(); 
 
-            // Akan memanggil resources/views/dashboard/hr_dashboard.blade.php
-            return view('dashboard.index', compact('employee', 'department', 'salary', 'presence', 'tasks', 'isHRManager'));
+            // PERBAIKAN DI SINI: Arahkan ke 'dashboard.hr_dashboard'
+            return view('dashboard.hr_dashboard', compact('employee', 'department', 'salary', 'presence', 'tasks', 'isHRManager'));
             
         } else {
             // EMPLOYEE DASHBOARD (Personal Data)
             $user_role = $user->getRoleNames()->first() ?? 'Employee';
             
-            $tasks_pending = Task::where('assigned_to', $user->employee_id)
-                                 ->where('status', 'pending')
-                                 ->count();
+            // Cek apakah user terhubung ke data employee
+            $employeeId = $user->employee_id;
+
+            if ($employeeId) {
+                $tasks_pending = Task::where('assigned_to', $employeeId)
+                                     ->where('status', 'pending')
+                                     ->count();
+            } else {
+                $tasks_pending = 0;
+            }
             
-            // Akan memanggil resources/views/dashboard/employee_dashboard.blade.php
-            return view('dashboard.index', compact('user_role', 'tasks_pending', 'isHRManager'));
+            // PERBAIKAN DI SINI: Arahkan ke 'dashboard.employee_dashboard'
+            return view('dashboard.employee_dashboard', compact('user_role', 'tasks_pending', 'isHRManager'));
         }
     }
 
@@ -55,7 +62,13 @@ class DashboardController extends Controller
         $query = Presence::where('status', 'present')->whereYear('date', $targetYear);
         
         if ($request->get('employee')) {
-            $query->where('employee_id', Auth::user()->employee_id);
+            // Pastikan user punya employee_id sebelum query
+            if (Auth::user()->employee_id) {
+                $query->where('employee_id', Auth::user()->employee_id);
+            } else {
+                // Jika user tidak punya data employee (misal admin murni), kembalikan 0
+                return response()->json(array_fill(0, 12, 0));
+            }
         }
 
         $rawMonthlyData = $query

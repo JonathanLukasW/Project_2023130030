@@ -19,10 +19,8 @@
     <link rel="stylesheet" href="{{ asset('template/dist/assets/extensions/@icon/dripicons/dripicons.css') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     
-    {{-- --- START: Penambahan Aset Kalender --- --}}
-    {{-- Load CSS Kalender --}}
+    {{-- CSS Kalender --}}
     <link rel="stylesheet" href="{{ asset('interactive-bs-event-calenda/dist/bs-calendar.min.css') }}"> 
-    {{-- --- END: Penambahan Aset Kalender --- --}}
 </head>
 
 <body>
@@ -71,7 +69,7 @@
                     </div>
                 </div>
 
-                {{-- REVISI UTAMA DIMULAI DARI SINI --}}
+                {{-- SIDEBAR MENU --}}
                 <div class="sidebar-menu">
                     <ul class="menu">
                         <li class="sidebar-title">Menu</li>
@@ -88,7 +86,6 @@
 
                         {{-- 2. Tasks --}}
                         @can('task_view')
-                        {{-- Tugas sudah tidak punya dropdown, karena kalender pindah ke Dashboard --}}
                         <li class="sidebar-item {{ request()->is('tasks*') ? 'active' : '' }}">
                             <a href="{{ url('/tasks') }}" class='sidebar-link'>
                                 <i class="bi bi-check-circle-fill"></i>
@@ -97,7 +94,7 @@
                         </li>
                         @endcan
 
-                        {{-- 3. Grup Kepegawaian (Hanya muncul jika punya SALAH SATU izin di bawah) --}}
+                        {{-- 3. Grup Manajemen HR (Hanya muncul jika punya izin terkait) --}}
                         @canany(['employee_manage', 'department_manage', 'position_manage', 'permission_manage'])
                         <li class="sidebar-item has-sub {{ request()->is('employees*') || request()->is('departments*') || request()->is('positions*') || request()->is('manage-permissions*') ? 'active' : '' }}">
                             <a href="#" class='sidebar-link'>
@@ -145,25 +142,25 @@
                         </li>
                         @endcanany
                         
-
-                        {{-- 4. Grup Kehadiran --}}
-                        @canany(['presence_create', 'leave_manage'])
+                        {{-- 4. Grup Kehadiran (Semua user bisa akses) --}}
                         <li class="sidebar-item has-sub {{ request()->is('presences*') || request()->is('leave-requests*') ? 'active' : '' }}">
                             <a href="#" class='sidebar-link'>
                                 <i class="bi bi-calendar3"></i>
                                 <span>Kehadiran</span>
                             </a>
                             <ul class="submenu {{ request()->is('presences*') || request()->is('leave-requests*') ? 'active' : '' }}">
-                                @can('presence_create')
+                                
+                                {{-- Link Presences --}}
                                 <li class="submenu-item {{ request()->is('presences*') ? 'active' : '' }}">
-                                    <a href="{{ url('/presences') }}" class="submenu-link">
+                                    <a href="{{ route('presences.index') }}" class="submenu-link">
                                         <i class="bi bi-calendar2-check"></i>
                                         <span>Presences</span></a>
                                 </li>
-                                @endcan
+                                
+                                {{-- Link Leave Requests (PERBAIKAN: Link ke Index) --}}
                                 @can('leave_manage')
                                 <li class="submenu-item {{ request()->is('leave-requests*') ? 'active' : '' }}">
-                                    <a href="{{ url('/leave-requests') }}" class="submenu-link">
+                                    <a href="{{ route('leave-requests.index') }}" class="submenu-link">
                                         <i class="bi bi-file-earmark-arrow-up"></i>
                                         <span>Leave Requests</span>
                                     </a>
@@ -171,19 +168,16 @@
                                 @endcan
                             </ul>
                         </li>
-                        @endcanany
 
-                        {{-- 5. Salaries --}}
-                        @can('salary_view_all')
+                        {{-- 5. Salaries (PERBAIKAN: Akses dibuka untuk semua user login) --}}
                         <li class="sidebar-item {{ request()->is('salaries*') ? 'active' : '' }}">
-                            <a href="{{ url('/salaries') }}" class='sidebar-link'>
+                            <a href="{{ route('salaries.index') }}" class='sidebar-link'>
                                 <i class="bi bi-currency-dollar"></i>
                                 <span>Salaries</span>
                             </a>
                         </li>
-                        @endcan
 
-                        {{-- 6. Logout (Selalu tampil) --}}
+                        {{-- 6. Logout --}}
                         <li class="sidebar-item">
                             <a href="{{ route('logout') }}" class='sidebar-link' 
                                onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
@@ -196,8 +190,6 @@
                         </li>
                     </ul>
                 </div>
-                {{-- REVISI UTAMA SELESAI --}}
-
             </div>
         </div>
         <div id="main">
@@ -206,7 +198,7 @@
             <footer>
                 <div class="footer clearfix mb-0 text-muted">
                     <div class="float-start">
-                        <p>2023 &copy; Mazer</p>
+                        <p>2023 © Mazer</p>
                     </div>
                     <div class="float-end">
                         <p>Crafted with <span class="text-danger"><i class="bi bi-heart-fill icon-mid"></i></span>
@@ -216,30 +208,29 @@
             </footer>
         </div>
     </div>
+    
     <script src="{{ asset('template/dist/assets/static/js/components/dark.js') }}"></script>
     <script src="{{ asset('template/dist/assets/extensions/perfect-scrollbar/perfect-scrollbar.min.js') }}"></script>
-
-
     <script src="{{ asset('template/dist/assets/compiled/js/app.js') }}"></script>
 
-    {{-- --- START: Penambahan Aset Kalender --- --}}
-    {{-- Load JS Kalender (INI YANG HILANG!) --}}
+    {{-- Script Kalender --}}
     <script src="{{ asset('interactive-bs-event-calenda/dist/bs-calendar.min.js') }}"></script> 
-    {{-- --- END: Penambahan Aset Kalender --- --}}
 
-    <!-- Need: Apexcharts -->
+    {{-- Apexcharts --}}
     <script src="{{ asset('template/dist/assets/extensions/apexcharts/apexcharts.min.js') }}"></script>
-    <script src="{{ asset('template/dist/assets/static/js/pages/dashboard.js') }}"></script>
+    {{-- <script src="{{ asset('template/dist/assets/static/js/pages/dashboard.js') }}"></script> --}} {{-- Di-disable karena konflik dengan chart custom --}}
 
+    {{-- Datatables --}}
     <script src="{{ asset('template/dist/assets/extensions/simple-datatables/umd/simple-datatables.js') }}"></script>
     <script src="{{ asset('template/dist/assets/static/js/pages/simple-datatables.js') }}"></script>
 
-    <!-- Need: chartJs -->
+    {{-- ChartJS --}}
     <script src="{{ asset('template/dist/assets/extensions/chart.js/chart.umd.js') }}"></script>
 
-    <!-- Need : buat tanggal-->
+    {{-- Flatpickr --}}
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    @stack('scripts') {{-- PASTI ADA INI DI BAWAH! --}}
+    
+    @stack('scripts') 
 
 </body>
 

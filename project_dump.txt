@@ -69,7 +69,7 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
         
-        // hasRole dan getRoleNames tersedia karena trait HasRoles di model User
+        // Memastikan method role tersedia
         $isHRManager = $user->hasRole('HR Manager');
 
         if ($isHRManager) {
@@ -79,21 +79,21 @@ class DashboardController extends Controller
             $salary = Salary::count();
             $presence = Presence::count();
             
-            // Mengambil 5 tugas terbaru (untuk HR Manager)
             $tasks = Task::with('employee')->limit(5)->get(); 
 
-            return view('dashboard.hr_dashboard', compact('employee', 'department', 'salary', 'presence', 'tasks'));
+            // Akan memanggil resources/views/dashboard/hr_dashboard.blade.php
+            return view('dashboard.index', compact('employee', 'department', 'salary', 'presence', 'tasks', 'isHRManager'));
             
         } else {
             // EMPLOYEE DASHBOARD (Personal Data)
             $user_role = $user->getRoleNames()->first() ?? 'Employee';
             
-            // Hitung tugas pending hanya untuk user ini
             $tasks_pending = Task::where('assigned_to', $user->employee_id)
                                  ->where('status', 'pending')
                                  ->count();
             
-            return view('dashboard.employee_dashboard', compact('user_role', 'tasks_pending'));
+            // Akan memanggil resources/views/dashboard/employee_dashboard.blade.php
+            return view('dashboard.index', compact('user_role', 'tasks_pending', 'isHRManager'));
         }
     }
 
@@ -1079,7 +1079,7 @@ class TaskController extends Controller
         try {
             // Mail::send(new NewTaskNotification($task));
         } catch (\Exception $e) {
-             Log::error('Gagal mengirim notifikasi tugas baru: ' . $e->getMessage()); // <-- FIXED
+             Log::error('Gagal mengirim notifikasi tugas baru: ' . $e->getMessage()); // <-- FIXED: Tanpa backslash
         }
 
         return redirect()->route('tasks.index')->with('success', 'Task created successfully.');
@@ -1872,7 +1872,7 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasRoles; // <-- HasRoles untuk hasRole/getRoleNames
+    use HasFactory, Notifiable, HasRoles; // <-- Ini yang menyediakan method hasRole/getRoleNames
 
     /**
      * The attributes that are mass assignable.
@@ -1883,7 +1883,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'employee_id', // <-- DITAMBAHKAN AGAR BISA MASS ASSIGNMENT
+        'employee_id', // <-- DITAMBAHKAN
     ];
 
     /**
@@ -3297,9 +3297,10 @@ $classes = ($active ?? false)
                     return response.json();
                 })
                 .then(events => {
+                    // Inisialisasi Kalender
                     new BSCalendar(calendarContainer, {
                         events: events,
-                        startMonth: new Date().getMonth(),
+                        startMonth: new Date().getMonth(), 
                         startYear: new Date().getFullYear(),
                         weekStart: 1, 
                         view: 'month'
@@ -6958,7 +6959,8 @@ $classes = ($active ?? false)
                                     @endif
                                 </td>
                                 <td>
-                                    <a href="{{ route('tasks.show', $task->id) }}" class="btn btn-info btn-sm">View</a>
+                                    {{-- Menggunakan Helper encodeId() untuk menyembunyikan ID (Poin 8) --}}
+                                    <a href="{{ route('tasks.show', encodeId($task->id)) }}" class="btn btn-info btn-sm">View</a>
 
                                     @can('task_mark_status')
                                         @if($task->status == 'pending')
@@ -7174,7 +7176,7 @@ use App\Http\Controllers\PresenceController;
 use App\Http\Controllers\SalaryController;
 use App\Http\Controllers\LeaveRequestController;
 use App\Http\Controllers\RolePermissionController;
-use App\Http\Controllers\ExportController; // <-- BARIS INI DITAMBAHKAN
+use App\Http\Controllers\ExportController;
 
 Route::get('captcha-image', function () {
     return captcha_img('flat');
@@ -7193,18 +7195,23 @@ Route::middleware('auth')->group(function () {
     // --- TASK CALENDAR DATA ROUTE (Dipakai oleh Dashboard Index) ---
     Route::get('/tasks/events', [TaskController::class, 'getEvents'])->name('tasks.events'); 
 
-    // --- EXPORT ROUTES (BARU DITAMBAHKAN) ---
-    // Hanya user dengan izin 'employee_manage' (HR Manager) yang boleh export data karyawan
+    // --- EXPORT ROUTES ---
     Route::get('/export/employees', [ExportController::class, 'exportEmployees'])->name('export.employees')->middleware(['permission:employee_manage']);
-    // Hanya user dengan izin 'presence_view_all' (HR Manager/Accounting) yang boleh export data kehadiran
     Route::get('/export/presences', [ExportController::class, 'exportPresences'])->name('export.presences')->middleware(['permission:presence_view_all']);
     
-    // --- TASK CRUD ROUTES ---
-    Route::resource('tasks', TaskController::class)->only(['index', 'show']);
+    // --- TASK CUSTOM ROUTES (FIXED POIN 8) ---
+    // Hapus Route::resource('tasks', TaskController::class)->only(['index', 'show']);
+    
+    Route::get('/tasks', [TaskController::class, 'index'])->name('tasks.index');
+    Route::get('/tasks/{encodedId}', [TaskController::class, 'show'])->name('tasks.show'); // <-- MENGGUNAKAN ENCRYPTED ID
+    
     Route::middleware('permission:task_create')->group(function () {
         Route::get('/tasks/create', [TaskController::class, 'create'])->name('tasks.create');
         Route::post('/tasks', [TaskController::class, 'store'])->name('tasks.store');
     });
+    
+    // Route edit, update, dan delete masih menggunakan {task} yang implicit binding.
+    // Kita biarkan dulu untuk menghindari perubahan di banyak file sekaligus.
     Route::middleware('permission:task_edit')->group(function () {
         Route::get('/tasks/{task}/edit', [TaskController::class, 'edit'])->name('tasks.edit');
         Route::put('/tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
@@ -8160,7 +8167,7 @@ class PermissionSeeder extends Seeder
 
 APP_NAME=Laravel
 APP_ENV=local
-APP_KEY=base64:gujZhJknpY/eP54ProiepqSQ6j63bypu9VwqyQHlOqg=
+APP_KEY=base64:nUMnn/Nbna1AhFZikePCpgsfIlW5JJpP6ZbcKZnNv4c=
 APP_DEBUG=true
 APP_URL=http://localhost
 
@@ -8207,14 +8214,13 @@ REDIS_HOST=127.0.0.1
 REDIS_PASSWORD=null
 REDIS_PORT=6379
 
-MAIL_MAILER=smtp
-MAIL_HOST=smtp.gmail.com
-MAIL_PORT=587
-MAIL_USERNAME=jonathanlukas17116@gmail.com
-MAIL_PASSWORD="mbsv jycn epew gjtd"
-MAIL_ENCRYPTION=tls
-
-MAIL_FROM_ADDRESS="${MAIL_USERNAME}"
+MAIL_MAILER=log
+MAIL_SCHEME=null
+MAIL_HOST=127.0.0.1
+MAIL_PORT=2525
+MAIL_USERNAME=null
+MAIL_PASSWORD=null
+MAIL_FROM_ADDRESS="hello@example.com"
 MAIL_FROM_NAME="${APP_NAME}"
 
 AWS_ACCESS_KEY_ID=

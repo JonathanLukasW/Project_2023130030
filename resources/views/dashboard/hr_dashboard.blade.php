@@ -10,34 +10,19 @@
 <div class="page-heading">
     <h3>Dashboard Overview (HR Manager)</h3>
 </div>
+
 <div class="page-content">
     
-    {{-- BARIS CARD RINGKASAN --}}
+    {{-- BARIS 1: STATISTIK UTAMA --}}
     <div class="row">
-        <div class="col-6 col-lg-3 col-md-6">
-            <div class="card">
-                <div class="card-body px-4 py-4-5">
-                    <div class="row">
-                        <div class="col-md-4 col-lg-12 col-xl-12 col-xxl-5 d-flex justify-content-start ">
-                            <div class="stats-icon purple mb-2">
-                                <i class="icon dripicons dripicons-tag"></i>
-                            </div>
-                        </div>
-                        <div class="col-md-8 col-lg-12 col-xl-12 col-xxl-7">
-                            <h6 class="text-muted font-semibold">Departments</h6>
-                            <h6 class="font-extrabold mb-0">{{ $department }}</h6>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        {{-- Total Employees --}}
         <div class="col-6 col-lg-3 col-md-6">
             <div class="card">
                 <div class="card-body px-4 py-4-5">
                     <div class="row">
                         <div class="col-md-4 col-lg-12 col-xl-12 col-xxl-5 d-flex justify-content-start ">
                             <div class="stats-icon blue mb-2">
-                                <i class="icon dripicons dripicons-user"></i>
+                                <i class="bi bi-people-fill"></i>
                             </div>
                         </div>
                         <div class="col-md-8 col-lg-12 col-xl-12 col-xxl-7">
@@ -48,35 +33,65 @@
                 </div>
             </div>
         </div>
+
+        {{-- Total Departments --}}
+        <div class="col-6 col-lg-3 col-md-6">
+            <div class="card">
+                <div class="card-body px-4 py-4-5">
+                    <div class="row">
+                        <div class="col-md-4 col-lg-12 col-xl-12 col-xxl-5 d-flex justify-content-start ">
+                            <div class="stats-icon purple mb-2">
+                                <i class="bi bi-building"></i>
+                            </div>
+                        </div>
+                        <div class="col-md-8 col-lg-12 col-xl-12 col-xxl-7">
+                            <h6 class="text-muted font-semibold">Departments</h6>
+                            <h6 class="font-extrabold mb-0">{{ $department }}</h6>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Kehadiran Hari Ini (Real-time) --}}
         <div class="col-6 col-lg-3 col-md-6">
             <div class="card">
                 <div class="card-body px-4 py-4-5">
                     <div class="row">
                         <div class="col-md-4 col-lg-12 col-xl-12 col-xxl-5 d-flex justify-content-start ">
                             <div class="stats-icon green mb-2">
-                                <i class="icon dripicons dripicons-alarm"></i>
+                                <i class="bi bi-check-circle-fill"></i>
                             </div>
                         </div>
                         <div class="col-md-8 col-lg-12 col-xl-12 col-xxl-7">
-                            <h6 class="text-muted font-semibold">Total Presences</h6>
-                            <h6 class="font-extrabold mb-0">{{ $presence }}</h6>
+                            <h6 class="text-muted font-semibold">Hadir Hari Ini</h6>
+                            {{-- Hitung manual query di Blade (Bisa dipindah ke controller nanti) --}}
+                            @php
+                                $todayPresence = \App\Models\Presence::whereDate('date', now())->where('status', 'present')->count();
+                            @endphp
+                            <h6 class="font-extrabold mb-0">{{ $todayPresence }}</h6>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+
+        {{-- Izin/Cuti Hari Ini --}}
         <div class="col-6 col-lg-3 col-md-6">
             <div class="card">
                 <div class="card-body px-4 py-4-5">
                     <div class="row">
                         <div class="col-md-4 col-lg-12 col-xl-12 col-xxl-5 d-flex justify-content-start ">
                             <div class="stats-icon red mb-2">
-                                <i class="icon dripicons dripicons-to-do"></i>
+                                <i class="bi bi-person-x-fill"></i>
                             </div>
                         </div>
                         <div class="col-md-8 col-lg-12 col-xl-12 col-xxl-7">
-                            <h6 class="text-muted font-semibold">Salaries Recorded</h6>
-                            <h6 class="font-extrabold mb-0">{{ $salary }}</h6>
+                            <h6 class="text-muted font-semibold">Cuti/Izin Hari Ini</h6>
+                            @php
+                                $todayLeave = \App\Models\Presence::whereDate('date', now())->where('status', 'leave')->count();
+                            @endphp
+                            <h6 class="font-extrabold mb-0">{{ $todayLeave }}</h6>
                         </div>
                     </div>
                 </div>
@@ -84,72 +99,67 @@
         </div>
     </div>
 
-    {{-- KALENDER TUGAS (EVENT) - HR Manager (Semua Tugas) --}}
+    {{-- BARIS 2: PENGGANTI CHART (TABEL RINGKASAN KEHADIRAN BULAN INI) --}}
+    {{-- Ini jauh lebih ringan daripada Chart.js --}}
     <div class="row">
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    <h4>Kalender Semua Tugas Perusahaan</h4>
-                    <p class="text-subtitle text-muted">Melihat jadwal dan *deadline* semua karyawan.</p>
-                </div>
-                <div class="card-body">
-                    <div id="calendar-container-hr"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    {{-- CHART KEHADIRAN - HR Manager (Semua Karyawan) --}}
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h4>Chart Kehadiran Seluruh Karyawan</h4>
-                    <p class="text-subtitle text-muted">Total Kehadiran Bulanan (2025).</p>
-                </div>
-                <div class="card-body">
-                    <canvas id="presence-hr"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    {{-- TABEL RINGKASAN TUGAS --}}
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h4>Latest Tasks Summary</h4>
+                    <h4>Statistik Kehadiran (Bulan Ini)</h4>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-hover table-lg">
+                        <table class="table table-hover">
                             <thead>
                                 <tr>
-                                    <th>Employee</th>
-                                    <th>Detail</th>
-                                    <th>Status</th>
+                                    <th>Kategori</th>
+                                    <th>Jumlah</th>
+                                    <th>Persentase (Estimasi)</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($tasks as $task)
+                                @php
+                                    $currentMonth = now()->month;
+                                    $totalRec = \App\Models\Presence::whereMonth('date', $currentMonth)->count();
+                                    
+                                    $p_present = \App\Models\Presence::whereMonth('date', $currentMonth)->where('status', 'present')->count();
+                                    $p_absent = \App\Models\Presence::whereMonth('date', $currentMonth)->where('status', 'absent')->count();
+                                    $p_leave = \App\Models\Presence::whereMonth('date', $currentMonth)->where('status', 'leave')->count();
+                                    
+                                    $perc_present = $totalRec > 0 ? round(($p_present / $totalRec) * 100, 1) : 0;
+                                    $perc_absent = $totalRec > 0 ? round(($p_absent / $totalRec) * 100, 1) : 0;
+                                    $perc_leave = $totalRec > 0 ? round(($p_leave / $totalRec) * 100, 1) : 0;
+                                @endphp
                                 <tr>
-                                    <td class="col-3">
-                                        <div class="d-flex align-items-center">
-                                            <div class="avatar avatar-md">
-                                                <img src="https://ui-avatars.com/api/?name={{ $task->employee->fullname }}&background=random">
-                                            </div>
-                                            <p class="font-bold ms-3 mb-0">{{ $task->employee->fullname }}</p>
+                                    <td><span class="badge bg-success">Hadir (Present)</span></td>
+                                    <td>{{ $p_present }}</td>
+                                    <td>
+                                        <div class="progress progress-primary mb-0">
+                                            <div class="progress-bar" role="progressbar" style="width: {{ $perc_present }}%" aria-valuenow="{{ $perc_present }}" aria-valuemin="0" aria-valuemax="100"></div>
                                         </div>
-                                    </td>
-                                    <td class="col-auto">
-                                        <p class=" mb-0">{{ $task->title }}</p>
-                                    </td>
-                                    <td class="col-auto">
-                                        <p class=" mb-0">{{ ucfirst($task->status) }}</p>
+                                        <small>{{ $perc_present }}%</small>
                                     </td>
                                 </tr>
-                                @endforeach
+                                <tr>
+                                    <td><span class="badge bg-danger">Alfa (Absent)</span></td>
+                                    <td>{{ $p_absent }}</td>
+                                    <td>
+                                        <div class="progress progress-danger mb-0">
+                                            <div class="progress-bar" role="progressbar" style="width: {{ $perc_absent }}%" aria-valuenow="{{ $perc_absent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                        <small>{{ $perc_absent }}%</small>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-warning text-dark">Cuti (Leave)</span></td>
+                                    <td>{{ $p_leave }}</td>
+                                    <td>
+                                        <div class="progress progress-warning mb-0">
+                                            <div class="progress-bar" role="progressbar" style="width: {{ $perc_leave }}%" aria-valuenow="{{ $perc_leave }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                        <small>{{ $perc_leave }}%</small>
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -157,25 +167,31 @@
             </div>
         </div>
     </div>
+
+    {{-- BARIS 3: Kalender (Tetap dipertahankan karena fitur utama) --}}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Kalender Tugas Perusahaan</h4>
+                </div>
+                <div class="card-body">
+                    <div id="calendar-container-hr"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 @push('scripts')
-{{-- Script untuk Kalender Tugas dan Chart Kehadiran --}}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // --- LOGIC KALENDER TUGAS (HR Manager) ---
         const calendarContainerHR = document.getElementById('calendar-container-hr');
         if (calendarContainerHR) {
-            // Ambil SEMUA data events (tanpa filter personal)
             fetch('{{ route('tasks.events') }}')
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Gagal memuat data tugas.');
-                    }
-                    return response.json();
-                })
+                .then(response => response.json())
                 .then(events => {
-                    // Inisialisasi Kalender
                     new BSCalendar(calendarContainerHR, {
                         events: events,
                         startMonth: new Date().getMonth(),
@@ -184,66 +200,7 @@
                         view: 'month'
                     });
                 })
-                .catch(error => {
-                    console.error('Error in HR calendar initialization:', error);
-                    calendarContainerHR.innerHTML = `<div class="alert alert-danger">Gagal memuat kalender: ${error.message}</div>`;
-                });
-        }
-        
-        // --- LOGIC CHART KEHADIRAN (HR Manager) ---
-        if (document.getElementById('presence-hr')) {
-            var ctxBar = document.getElementById('presence-hr').getContext('2d');
-            var myBar = new Chart(ctxBar, {
-                type: 'bar',
-                data: {
-                    labels: ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'],
-                    datasets: [{
-                        label: 'Total Kehadiran',
-                        data: [],
-                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                        borderColor: 'rgba(54, 162, 235, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                        },
-                        title: {
-                            display: true,
-                            text: 'Total Kehadiran Bulanan (2025)'
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            suggestedMax: 30 // Maksimal jumlah hari kerja/hadir
-                        }
-                    }
-                }
-            });
-
-            function updateData() {
-                // Memanggil AJAX endpoint tanpa filter (semua karyawan)
-                fetch('{{ url("/dashboard/presence") }}') 
-                    .then(response => response.json())
-                    .then((output) => {
-                        if (output && Array.isArray(output) && output.length === 12) {
-                            myBar.data.datasets[0].data = output;
-                            myBar.update();
-                        } else {
-                            console.error("Data kehadiran yang diterima dari server tidak valid:", output);
-                            myBar.data.datasets[0].data = Array(12).fill(0);
-                            myBar.update();
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Fetch error:', error);
-                    });
-            }
-            updateData();
+                .catch(error => console.error('Error calendar:', error));
         }
     });
 </script>

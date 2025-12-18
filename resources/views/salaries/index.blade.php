@@ -8,83 +8,87 @@
 </header>
 
 <div class="page-heading">
-    <div class="page-title">
-        <div class="row">
-            <div class="col-12 col-md-6 order-md-1 order-last">
-                <h3>Salaries</h3>
-                <p class="text-subtitle text-muted">Manage Salaries</p>
+    <h3>Salaries (Payroll)</h3>
+</div>
+<section class="section">
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title">Data Penggajian</h5>
+        </div>
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between mb-3">
+                {{-- Tombol Generate Otomatis (Hanya HR) --}}
+                @can('salary_view_all')
+                <a href="{{ route('salaries.generate_form') }}" class="btn btn-success">
+                    <i class="bi bi-calculator"></i> Hitung Gaji Otomatis
+                </a>
+                @endcan
+                
+                {{-- Tombol Manual SUDAH DIHAPUS --}}
             </div>
-            <div class="col-12 col-md-6 order-md-2 order-first">
-                <nav aria-label="breadcrumb" class="breadcrumb-header float-start float-lg-end">
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="index.html">Dashboard</a></li>
-                        <li class="breadcrumb-item"><a href="index.html">salary</a></li>
-                        <li class="breadcrumb-item active" aria-current="page">Index</li>
-                    </ol>
-                </nav>
-            </div>
+
+            @if(session('success'))
+            <div class="alert alert-success">{{ session('success') }}</div>
+            @endif
+
+            <table class="table table-striped" id="table1">
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Gaji Pokok</th>
+                        <th>Potongan</th>
+                        <th>Bonus</th>
+                        <th>Total (Net)</th>
+                        <th>Periode</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($salaries as $salary)
+                    <tr>
+                        <td>{{ $salary->employee->fullname }}</td>
+                        <td>Rp {{ number_format($salary->salary, 0, ',', '.') }}</td>
+                        <td class="text-danger">Rp {{ number_format($salary->deductions, 0, ',', '.') }}</td>
+                        <td class="text-success">Rp {{ number_format($salary->bonuses, 0, ',', '.') }}</td>
+                        <td class="fw-bold">Rp {{ number_format($salary->net_salary, 0, ',', '.') }}</td>
+                        <td>{{ \Carbon\Carbon::parse($salary->pay_date)->format('F Y') }}</td>
+                        <td>
+                            <a href="{{ route('salaries.show', $salary->id) }}" class="btn btn-info btn-sm" title="Lihat Slip">
+                                <i class="bi bi-receipt"></i> Slip
+                            </a>
+
+                            @can('salary_view_all')
+                                {{-- Tombol Edit DIHAPUS --}}
+                                
+                                <form action="{{ route('salaries.destroy', $salary->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus data gaji ini? Anda bisa meng-generate ulang nanti.');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-danger btn-sm" title="Hapus">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            @endcan
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
         </div>
     </div>
-    <section class="section">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title">
-                    salary
-                </h5>
-            </div>
-            <div class="card-body">
-
-                <div class="d-flex">
-                    @can('salary_view_all')
-                        <a href="{{ route('salaries.create')}}" class="btn btn-primary mb-3 ms-auto">New Salary</a>
-                    @endcan
-                </div>
-
-                @if(session('success'))
-                <div class="alert alert-success">{{ session('success') }}</div>
-                @endif
-
-                <table class="table table-striped" id="table1">
-                    <thead>
-                        <tr>
-                            <th>Employee</th>
-                            <th>Salary</th>
-                            <th>Deductions</th>
-                            <th>Bonuses</th>
-                            <th>Net Salary</th>
-                            <th>Pay Date</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($salaries as $salary)
-                        <tr>
-                            <td>{{ $salary->employee->fullname }}</td>
-                            <td>{{ number_format($salary->salary) }}</td>
-                            <td>{{ number_format($salary->deductions) }}</td>
-                            <td>{{ number_format($salary->bonuses) }}</td>
-                            <td>{{ number_format($salary->net_salary) }}</td>
-                            <td>{{ $salary->pay_date}}</td>
-                            <td>
-                                <a href="{{ route('salaries.show', $salary->id) }}" class="btn btn-info btn-sm">Salary Slip</a>
-
-                                @can('salary_view_all')
-                                    <a href="{{ route('salaries.edit', $salary->id) }}" class="btn btn-warning btn-sm">Edit</a>
-                                    <form action="{{ route('salaries.destroy', $salary->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this salary?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                                    </form>
-                                @endcan
-                            </td>
-                        </tr>
-
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-    </section>
-</div>
+</section>
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const table = document.getElementById('table1');
+        if (table) {
+            new simpleDatatables.DataTable(table, {
+                searchable: true,
+                perPageSelect: [5, 10, 20, 50],
+            });
+        }
+    });
+</script>
+@endpush

@@ -12,21 +12,20 @@ class LeaveRequestController extends Controller
 {
     public function index()
     {
-        // --- PERUBAHAN 2: Ganti logic 'session' ke 'Auth::user()->can()' ---
         $query = LeaveRequest::with('employee');
 
-        // Cek pakai Izin (Permission) Spatie, bukan Session!
-        // Kita gunakan 'leave_confirm_reject' sebagai penanda "Admin" di modul ini
-        // (Berdasarkan Seeder-mu, hanya 'HR Manager' yang punya izin ini)
-        if (Auth::user()->can('leave_confirm_reject')) {
-            // HR Manager (atau siapa pun yg bisa confirm/reject) bisa lihat semua.
-        } else {
-            // Karyawan biasa hanya bisa lihat datanya sendiri.
+        // Cek izin
+        if (!Auth::user()->can('leave_confirm_reject')) {
             $query->where('employee_id', Auth::user()->employee_id);
         }
         
         $leaveRequests = $query->orderBy('start_date', 'desc')->get();
-        return view('leave-requests.index', compact('leaveRequests'));
+
+        // --- TAMBAHAN: Ambil data employees untuk dropdown filter/create di view index ---
+        $employees = Employee::orderBy('fullname', 'asc')->get(); 
+
+        // Kirim $employees ke view
+        return view('leave-requests.index', compact('leaveRequests', 'employees'));
     }
 
     public function create()
@@ -37,43 +36,35 @@ class LeaveRequestController extends Controller
 
     public function store(Request $request)
     {
-        // --- PERUBAHAN 3: Ganti logic 'session' ke 'Auth::user()->can()' ---
-        
-        // Cek pakai Izin (Permission) Spatie
-        if (Auth::user()->can('leave_confirm_reject')) {
-            // Admin/HR bisa membuat cuti untuk karyawan lain
-            $validated = $request->validate([
-                'employee_id' => 'required|exists:employees,id',
-                'leave_type' => 'required|string',
-                'start_date' => 'required|date',
-                'end_date' => 'required|date|after_or_equal:start_date',
-            ]);
-            
-            $data = $validated;
-            $data['status'] = 'pending'; // Set status default
+        // ... validasi yang sudah ada ...
 
-            LeaveRequest::create($data);
+        // Tambah validasi file (opsional, max 2MB, gambar/pdf)
+        $request->validate([
+            // ... rule lain ...
+            'attachment' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+        ]);
 
-        } else {
-            // Karyawan biasa membuat cuti untuk diri sendiri
-            $validated = $request->validate([
-                'leave_type' => 'required|string',
-                'start_date' => 'required|date',
-                'end_date' => 'required|date|after_or_equal:start_date',
-            ]);
+        // Siapkan data
+        $data = $request->except(['attachment']); // Ambil semua kecuali file dulu
 
-            LeaveRequest::create([
-                'employee_id' => Auth::user()->employee_id, // Ambil dari Auth
-                'leave_type' => $validated['leave_type'],
-                'start_date' => $validated['start_date'],
-                'end_date' => $validated['end_date'],
-                'status' => 'pending',
-            ]);
+        // Logic Upload File
+        if ($request->hasFile('attachment')) {
+            // Simpan ke folder 'public/leave_attachments'
+            $path = $request->file('attachment')->store('leave_attachments', 'public');
+            $data['attachment'] = $path;
         }
 
-        return redirect()->route('leave-requests.index')->with('success', 'Leave request created successfully.');
-    }
+        $data['status'] = 'pending';
 
+        // Logic Employee ID otomatis (jika user biasa) -> sama seperti kodemu sebelumnya
+        if (!Auth::user()->can('leave_confirm_reject')) {
+            $data['employee_id'] = Auth::user()->employee_id;
+        }
+
+        LeaveRequest::create($data);
+
+        return redirect()->route('leave-requests.index')->with('success', 'Request created.');
+    }
     public function edit(LeaveRequest $leaveRequest)
     {
         // --- PERUBAHAN 4: TAMBAHAN KEAMANAN ---
@@ -81,12 +72,13 @@ class LeaveRequestController extends Controller
         // 1. User adalah admin (bisa confirm/reject)
         // ATAU
         // 2. Ini adalah request miliknya DAN statusnya masih 'pending'
-        if (!Auth::user()->can('leave_confirm_reject') && 
-            ($leaveRequest->employee_id !== Auth::user()->employee_id || $leaveRequest->status !== 'pending')) 
-        {
+        if (
+            !Auth::user()->can('leave_confirm_reject') &&
+            ($leaveRequest->employee_id !== Auth::user()->employee_id || $leaveRequest->status !== 'pending')
+        ) {
             abort(403, 'Unauthorized action. You can only edit your own pending requests.');
         }
-        
+
         $employees = Employee::all();
         return view('leave-requests.edit', compact('leaveRequest', 'employees'));
     }
@@ -95,9 +87,10 @@ class LeaveRequestController extends Controller
     {
         // --- PERUBAHAN 5: TAMBAHAN KEAMANAN ---
         // Cek otorisasi yang sama
-        if (!Auth::user()->can('leave_confirm_reject') && 
-            ($leaveRequest->employee_id !== Auth::user()->employee_id || $leaveRequest->status !== 'pending')) 
-        {
+        if (
+            !Auth::user()->can('leave_confirm_reject') &&
+            ($leaveRequest->employee_id !== Auth::user()->employee_id || $leaveRequest->status !== 'pending')
+        ) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -110,7 +103,7 @@ class LeaveRequestController extends Controller
                 'end_date' => 'required|date|after_or_equal:start_date',
             ]);
         } else {
-        // Karyawan biasa tidak bisa ganti 'employee_id'
+            // Karyawan biasa tidak bisa ganti 'employee_id'
             $validated = $request->validate([
                 'leave_type' => 'required|string',
                 'start_date' => 'required|date',
@@ -128,7 +121,7 @@ class LeaveRequestController extends Controller
     public function confirm(int $id)
     {
         $leaveRequest = LeaveRequest::findOrFail($id);
-        $leaveRequest->update(['status' => 'approved']); 
+        $leaveRequest->update(['status' => 'approved']);
 
         return redirect()->route('leave-requests.index')->with('success', 'Leave request confirmed successfully.');
     }
@@ -136,20 +129,22 @@ class LeaveRequestController extends Controller
     public function reject(int $id)
     {
         $leaveRequest = LeaveRequest::findOrFail($id);
-        $leaveRequest->update(['status' => 'rejected']); 
+        $leaveRequest->update(['status' => 'rejected']);
 
         return redirect()->route('leave-requests.index')->with('success', 'Leave request rejected successfully.');
     }
 
-    public function destroy(LeaveRequest $leaveRequest){
-        if (!Auth::user()->can('leave_confirm_reject') && 
-            ($leaveRequest->employee_id !== Auth::user()->employee_id || $leaveRequest->status !== 'pending')) 
-        {
+    public function destroy(LeaveRequest $leaveRequest)
+    {
+        if (
+            !Auth::user()->can('leave_confirm_reject') &&
+            ($leaveRequest->employee_id !== Auth::user()->employee_id || $leaveRequest->status !== 'pending')
+        ) {
             abort(403, 'Unauthorized action. You can only delete your own pending requests.');
         }
 
         $leaveRequest->delete();
 
         return redirect()->route('leave-requests.index')->with('success', 'Leave request deleted successfully.');
-    }   
+    }
 }

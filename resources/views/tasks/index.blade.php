@@ -69,7 +69,8 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <a href="{{ route('tasks.show', $task->id) }}" class="btn btn-info btn-sm">View</a>
+                                    {{-- Menggunakan Helper encodeId() untuk menyembunyikan ID (Poin 8) --}}
+                                    <a href="{{ route('tasks.show', encodeId($task->id)) }}" class="btn btn-info btn-sm">View</a>
 
                                     @can('task_mark_status')
                                         @if($task->status == 'pending')

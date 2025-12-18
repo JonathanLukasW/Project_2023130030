@@ -23,6 +23,7 @@ class PositionController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'base_salary' => 'required|numeric', // <-- Validasi baru
         ]);
 
         Position::create($request->all());
@@ -39,6 +40,7 @@ class PositionController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'base_salary' => 'required|numeric', // <-- Validasi baru
         ]);
 
         $position->update($request->all());
@@ -48,7 +50,6 @@ class PositionController extends Controller
 
     public function destroy(Position $position){
         $position->delete();
-
         return redirect()->route('positions.index')->with('success', 'Position deleted successfully.');
     }
 }

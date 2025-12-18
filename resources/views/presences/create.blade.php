@@ -8,165 +8,220 @@
 </header>
 
 <div class="page-heading">
-    <div class="page-title">
-        <div class="row">
-            <div class="col-12 col-md-6 order-md-1 order-last">
-                <h3>Presences</h3>
-                <p class="text-subtitle text-muted">Handle data presence</p>
-            </div>
-            <div class="col-12 col-md-6 order-md-2 order-first">
-                <nav aria-label="breadcrumb" class="breadcrumb-header float-start float-lg-end">
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="index.html">Dashboard</a></li>
-                        <li class="breadcrumb-item"><a href="index.html">presence</a></li>
-                        <li class="breadcrumb-item active" aria-current="page">New</li>
-                    </ol>
-                </nav>
-            </div>
+    <h3>Form Absensi</h3>
+</div>
+
+<section class="section">
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title">
+                @if(isset($isCheckIn) && $isCheckIn)
+                    Absen Masuk (Check In)
+                @else
+                    Absen Pulang (Check Out)
+                @endif
+            </h5>
         </div>
-    </div>
-    <section class="section">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title">
-                    Create
-                </h5>
-            </div>
-            <div class="card-body">
+        <div class="card-body">
 
-                {{-- --- PERUBAHAN: Ganti 'session' ke '@can' --- --}}
-                {{-- Cek pakai Izin (Permission) Spatie, bukan Session! --}}
-                {{-- (Izin 'presence_view_all' hanya dimiliki HR/Admin di Seeder & Controller) --}}
-                @can('presence_view_all')
-
-                {{-- INI FORM UNTUK ADMIN (INPUT MANUAL) --}}
+            @can('presence_view_all')
+                {{-- === FORM ADMIN (Tetap Manual) === --}}
+                <div class="alert alert-info">Mode Admin: Input Manual</div>
                 <form action="{{ route('presences.store')}}" method="POST">
                     @csrf
-
                     <div class="mb-3">
-                        <label for="" class="form-label">Employee</label>
-                        <select name="employee_id" class="form-control @error('employee_id') is-invalid @enderror">
-                            <option value="">Select an Employee</option>
+                        <label>Employee</label>
+                        <select name="employee_id" class="form-control">
                             @foreach($employees as $employee)
                             <option value="{{ $employee->id }}">{{ $employee->fullname }}</option>
                             @endforeach
                         </select>
-                        @error('employee_id')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
                     </div>
-
-                    <div class="mb-3">
-                        <label for="" class="form-label">Check In</label>
-                        <input type="text" class="form-control datetime" name="check_in" required>
-                        @error('check_in')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
+                    <div class="row">
+                        <div class="col-6"><label>Check In</label><input type="datetime-local" name="check_in" class="form-control"></div>
+                        <div class="col-6"><label>Check Out</label><input type="datetime-local" name="check_out" class="form-control"></div>
                     </div>
-
-                    <div class="mb-3">
-                        <label for="" class="form-label">Check Out</label>
-                        <input type="text" class="form-control datetime" name="check_out" required>
-                        @error('check_out')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="" class="form-label">Date</label>
-                        <input type="text" class="form-control date" name="date" required>
-                        @error('date')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="" class="form-label">Status</label>
-                        <select name="status" id="status" class="form-select">
-                            <option value="present">Present</option>
-                            <option value="absent">Absent</option>
-                            <option value="leave">Leave</option> {{-- Ganti dari 'sick' --}}
-                        </select>
-                        @error('status')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <button type="submit" class="btn btn-primary">Submit</button>
-                    <a href="{{ route('presences.index') }}" class="btn btn-secondary">Back</a>
-
+                    <div class="my-3"><label>Date</label><input type="date" name="date" class="form-control"></div>
+                    <div class="mb-3"><label>Status</label><select name="status" class="form-control"><option value="present">Present</option><option value="absent">Absent</option></select></div>
+                    <button class="btn btn-primary">Save</button>
                 </form>
 
+            @else
+                {{-- === FORM KARYAWAN (Webcam + GPS) === --}}
+                
+                @if(isset($todayPresence) && $todayPresence->check_out)
+                    <div class="alert alert-success text-center">
+                        <h4><i class="bi bi-check-circle-fill"></i> Anda sudah menyelesaikan absensi hari ini.</h4>
+                        <p>Sampai jumpa besok!</p>
+                        <a href="{{ route('dashboard') }}" class="btn btn-primary mt-3">Kembali ke Dashboard</a>
+                    </div>
                 @else
 
-                {{-- INI FORM UNTUK KARYAWAN BIASA (PAKAI GPS) --}}
-                <form action="{{ route('presences.store') }}" method="POST">
-                    @csrf
+                    <form action="{{ route('presences.store') }}" method="POST" id="presence-form">
+                        @csrf
+                        
+                        {{-- Hidden Input --}}
+                        <input type="hidden" name="type" value="{{ $isCheckIn ? 'in' : 'out' }}">
+                        <input type="hidden" name="photo" id="photo">
+                        <input type="hidden" name="latitude" id="latitude">
+                        <input type="hidden" name="longitude" id="longitude">
 
-                    <div class="mb-3"><b>Note</b> : Mohon izinkan akses lokasi, supaya presensi diterima</div>
+                        @if($isCheckIn)
+                            {{-- TAMPILAN CHECK IN (Ada Kamera) --}}
+                            <div class="row">
+                                <div class="col-md-6 mb-3 text-center">
+                                    <div class="card border h-100">
+                                        <div class="card-body">
+                                            <h6>1. Foto Selfie</h6>
+                                            <div id="my_camera" class="mx-auto mb-2" style="background:#eee"></div>
+                                            <div id="results" style="display:none" class="mb-2"></div>
+                                            
+                                            <button type="button" class="btn btn-info btn-sm mt-2" onClick="take_snapshot()">
+                                                <i class="bi bi-camera"></i> Ambil Foto
+                                            </button>
+                                            <button type="button" class="btn btn-warning btn-sm mt-2" onClick="reset_camera()" id="btn-reset" style="display:none">
+                                                <i class="bi bi-arrow-counterclockwise"></i> Foto Ulang
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="card border h-100">
+                                        <div class="card-body">
+                                            <h6>2. Lokasi</h6>
+                                            <div id="location-status" class="alert alert-warning py-1 px-2 text-sm">Mencari lokasi...</div>
+                                            {{-- Peta menggunakan Google Maps Embed standard --}}
+                                            <iframe id="map-frame" width="100%" height="250" style="border:0" allowfullscreen loading="lazy"></iframe>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid mt-3">
+                                <button type="button" class="btn btn-primary btn-lg" id="btn-submit" onClick="submitCheckIn()" disabled>
+                                    <i class="bi bi-box-arrow-in-right"></i> CHECK IN SEKARANG
+                                </button>
+                            </div>
 
-                    <div class="mb-3">
-                        <label for="" class="form-label">Latitude</label>
-                        <input type="text" class="form-control " name="latitude" id="latitude" required readonly>
-                    </div>
+                        @else
+                            {{-- TAMPILAN CHECK OUT (Hanya Tombol) --}}
+                            <div class="text-center py-5">
+                                <h3>Halo, {{ Auth::user()->name }}</h3>
+                                <p>Waktu Check-In Anda: <strong>{{ \Carbon\Carbon::parse($todayPresence->check_in)->format('H:i') }}</strong></p>
+                                <p class="text-muted mb-4">Apakah Anda ingin mengakhiri jam kerja hari ini?</p>
+                                
+                                <button type="submit" class="btn btn-danger btn-lg px-5">
+                                    <i class="bi bi-box-arrow-left"></i> CHECK OUT SEKARANG
+                                </button>
+                            </div>
+                        @endif
+                    </form>
 
-                    <div class="mb-3">
-                        <label for="" class="form-label">Longitude</label>
-                        <input type="text" class="form-control " name="longitude" id="longitude" required readonly>
-                    </div>
+                @endif
 
-                    <div class="mb-3">
-                        <iframe width="500" height="300" src="" frameborder="0" scrolling="no" marginheight="0" marginwidth="0"></iframe>
-                    </div>
+                {{-- SCRIPT JAVASCRIPT FIXED URL --}}
+                @if($isCheckIn && !(isset($todayPresence) && $todayPresence->check_out))
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/webcamjs/1.0.26/webcam.min.js"></script>
+                <script>
+                    // 1. Setup Webcam
+                    Webcam.set({
+                        width: 320,
+                        height: 240,
+                        image_format: 'jpeg',
+                        jpeg_quality: 90
+                    });
+                    
+                    setTimeout(() => { 
+                        Webcam.attach('#my_camera'); 
+                    }, 500);
 
-                    <button type="submit" class="btn btn-primary" id="btn-present" disabled>Presence</button>
-                </form>
-                @endcan
-                {{-- --- AKHIR PERUBAHAN --- --}}
-            </div>
-        </div>
-
-    </section>
-</div>
-
-<script>
-    // Pastikan script ini hanya berjalan jika form GPS ada
-    if (document.getElementById('latitude')) {
-        const iframe = document.querySelector('iframe');
-        const officeLat = -6.895505;
-        const officeLong = 107.613252;
-        const threshold = 0.1; // (Ini threshold yg besar, mungkin 0.001?)
-
-        navigator.geolocation.getCurrentPosition(function(position) {
-            const lat = position.coords.latitude;
-            const long = position.coords.longitude;
-            iframe.src = `https://maps.google.com/maps?q=${lat},${long}&output=embed`;
-        });
-
-        document.addEventListener('DOMContentLoaded', (event) => {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(function(position) {
-                    const lat = position.coords.latitude;
-                    const long = position.coords.longitude;
-
-                    document.getElementById('latitude').value = lat;
-                    document.getElementById('longitude').value = long;
-
-                    const distance = Math.sqrt(Math.pow(lat - officeLat, 2) + Math.pow(long - officeLong, 2));
-
-                    if (distance <= threshold) {
-                        console.log('Kamu berada di Kantor, ayo bekerja');
-                        document.getElementById('btn-present').removeAttribute('disabled');
-                    } else {
-                        // Jangan pakai alert(), ini mengganggu. Ganti ke console.
-                        console.error('Kamu tidak berada di kantor, tolong absen di kantor');
-                        // Kamu bisa tambahkan pesan error di HTML
+                    function take_snapshot() {
+                        Webcam.snap(function(data_uri) {
+                            document.getElementById('my_camera').style.display = 'none';
+                            document.getElementById('results').style.display = 'block';
+                            document.getElementById('results').innerHTML = '<img src="'+data_uri+'" class="img-fluid rounded"/>';
+                            document.getElementById('photo').value = data_uri;
+                            document.getElementById('btn-reset').style.display = 'inline-block';
+                            checkReady();
+                        });
                     }
-                });
-            } else {
-                console.log('Geolocation is not supported by this browser.');
-            }
-        });
-    }
-</script>
+
+                    function reset_camera() {
+                        document.getElementById('photo').value = '';
+                        document.getElementById('results').style.display = 'none';
+                        document.getElementById('my_camera').style.display = 'block';
+                        document.getElementById('btn-reset').style.display = 'none';
+                        checkReady(); 
+                    }
+
+                    // 2. Setup Geolocation (GPS)
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(
+                            function(position) {
+                                const lat = position.coords.latitude;
+                                const long = position.coords.longitude;
+                                
+                                document.getElementById('latitude').value = lat;
+                                document.getElementById('longitude').value = long;
+                                
+                                const locStatus = document.getElementById('location-status');
+                                locStatus.className = 'alert alert-success py-1 px-2 text-sm';
+                                locStatus.innerHTML = `Lokasi: ${lat.toFixed(5)}, ${long.toFixed(5)}`;
+                                
+                                // === PERBAIKAN URL MAPS ===
+                                // Menggunakan https://maps.google.com/maps?q=...
+                                const mapUrl = `https://maps.google.com/maps?q=${lat},${long}&hl=id&z=16&output=embed`;
+                                document.getElementById('map-frame').src = mapUrl;
+                                
+                                checkReady();
+                            },
+                            function(error) {
+                                const locStatus = document.getElementById('location-status');
+                                locStatus.className = 'alert alert-danger py-1 px-2 text-sm';
+                                switch(error.code) {
+                                    case error.PERMISSION_DENIED:
+                                        locStatus.innerHTML = "Izin lokasi ditolak. Harap izinkan akses lokasi."; break;
+                                    case error.POSITION_UNAVAILABLE:
+                                        locStatus.innerHTML = "Informasi lokasi tidak tersedia."; break;
+                                    case error.TIMEOUT:
+                                        locStatus.innerHTML = "Waktu permintaan lokasi habis."; break;
+                                    default:
+                                        locStatus.innerHTML = "Terjadi kesalahan lokasi."; break;
+                                }
+                            }
+                        );
+                    } else {
+                        document.getElementById('location-status').innerHTML = "Browser ini tidak mendukung Geolocation.";
+                    }
+
+                    // 3. Cek apakah tombol submit boleh aktif
+                    function checkReady() {
+                        const photoVal = document.getElementById('photo').value;
+                        const latVal = document.getElementById('latitude').value;
+
+                        if(photoVal && latVal) {
+                            document.getElementById('btn-submit').removeAttribute('disabled');
+                        } else {
+                            document.getElementById('btn-submit').setAttribute('disabled', 'disabled');
+                        }
+                    }
+
+                    // 4. Proses Submit
+                    function submitCheckIn() {
+                        if(!document.getElementById('photo').value) { alert('Foto wajib diambil!'); return; }
+                        if(!document.getElementById('latitude').value) { alert('Lokasi belum ditemukan!'); return; }
+                        
+                        const btn = document.getElementById('btn-submit');
+                        btn.innerHTML = 'Mengirim Absensi...';
+                        btn.disabled = true;
+
+                        document.getElementById('presence-form').submit();
+                    }
+                </script>
+                @endif
+
+            @endcan
+        </div>
+    </div>
+</section>
 @endsection
