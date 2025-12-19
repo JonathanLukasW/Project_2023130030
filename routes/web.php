@@ -18,10 +18,17 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
-Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [AuthController::class, 'login']);
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [AuthController::class, 'login']);
 
+    Route::get('/forgot-password', [AuthController::class, 'showForgotPasswordForm'])->name('password.request');
+    Route::post('/forgot-password', [AuthController::class, 'sendResetLinkEmail'])->name('password.email');
+    Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])->name('password.reset');
+    Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.store');
+});
+
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::get('/reload-captcha', [AuthController::class, 'reloadCaptcha'])->name('reloadCaptcha');
 
 
@@ -33,25 +40,22 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-    
     Route::get('/change-password', [ProfileController::class, 'editPassword'])->name('password.edit');
     Route::post('/change-password', [ProfileController::class, 'updatePassword'])->name('password.update');
-
 
     Route::middleware(['role:HR Manager'])->group(function () {
         Route::resource('employees', EmployeeController::class);
         Route::resource('departments', DepartmentController::class);
         Route::resource('positions', PositionController::class);
-        
+     
         Route::get('/manage-permissions', [RolePermissionController::class, 'index'])->name('permissions.index');
-        Route::post('/manage-permissions/sync', [RolePermissionController::class, 'sync'])->name('permissions.update');
-        
+        Route::post('/manage-permissions/update', [RolePermissionController::class, 'update'])->name('permissions.update');
+
         Route::get('/export/presences', [ExportController::class, 'presences'])->name('export.presences');
         Route::get('/export/employees', [ExportController::class, 'employees'])->name('export.employees');
     });
 
     Route::get('presences', [PresenceController::class, 'index'])->name('presences.index');
-    
     Route::get('presences/create', [PresenceController::class, 'create'])->name('presences.create')->middleware(['permission:presence_create']);
     Route::post('presences', [PresenceController::class, 'store'])->name('presences.store')->middleware(['permission:presence_create']);
 
