@@ -142,8 +142,8 @@
                         
                         @can('presence_view_all')
                         <td>
-                            <a href="{{ route('presences.edit', $presence->id) }}" class="btn btn-warning btn-sm"><i class="bi bi-pencil"></i></a>
-                            <form action="{{ route('presences.destroy', $presence->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus data ini?');">
+                            <a href="{{ route('presences.edit', encrypt($presence->id)) }}" class="btn btn-warning btn-sm"><i class="bi bi-pencil"></i></a>
+                            <form action="{{ route('presences.destroy', encrypt($presence->id)) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus data ini?');">
                                 @csrf @method('DELETE')
                                 <button class="btn btn-danger btn-sm"><i class="bi bi-trash"></i></button>
                             </form>

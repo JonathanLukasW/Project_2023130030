@@ -20,11 +20,11 @@
             <div class="d-flex justify-content-between mb-3">
                 {{-- Tombol Generate Otomatis (Hanya HR) --}}
                 @can('salary_view_all')
-                <a href="{{ route('salaries.generate_form') }}" class="btn btn-success">
+                <a href="{{ route('salaries.generateView') }}" class="btn btn-success">
                     <i class="bi bi-calculator"></i> Hitung Gaji Otomatis
                 </a>
                 @endcan
-                
+
                 {{-- Tombol Manual SUDAH DIHAPUS --}}
             </div>
 
@@ -54,20 +54,20 @@
                         <td class="fw-bold">Rp {{ number_format($salary->net_salary, 0, ',', '.') }}</td>
                         <td>{{ \Carbon\Carbon::parse($salary->pay_date)->format('F Y') }}</td>
                         <td>
-                            <a href="{{ route('salaries.show', $salary->id) }}" class="btn btn-info btn-sm" title="Lihat Slip">
+                            <a href="{{ route('salaries.show', encrypt($salary->id)) }}" class="btn btn-info btn-sm" title="Lihat Slip">
                                 <i class="bi bi-receipt"></i> Slip
                             </a>
 
                             @can('salary_view_all')
-                                {{-- Tombol Edit DIHAPUS --}}
-                                
-                                <form action="{{ route('salaries.destroy', $salary->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus data gaji ini? Anda bisa meng-generate ulang nanti.');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-danger btn-sm" title="Hapus">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </form>
+                            {{-- Tombol Edit DIHAPUS --}}
+
+                            <form action="{{ route('salaries.destroy', encrypt($salary->id)) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus data gaji ini? Anda bisa meng-generate ulang nanti.');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-danger btn-sm" title="Hapus">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
                             @endcan
                         </td>
                     </tr>
@@ -81,7 +81,7 @@
 
 @push('scripts')
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function() {
         const table = document.getElementById('table1');
         if (table) {
             new simpleDatatables.DataTable(table, {

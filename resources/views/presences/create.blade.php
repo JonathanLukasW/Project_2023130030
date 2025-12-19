@@ -24,30 +24,48 @@
         </div>
         <div class="card-body">
 
+            {{-- CEK IZIN: Admin vs Karyawan --}}
             @can('presence_view_all')
-                {{-- === FORM ADMIN (Tetap Manual) === --}}
-                <div class="alert alert-info">Mode Admin: Input Manual</div>
+                
+                {{-- === TAMPILAN ADMIN (INPUT MANUAL SIMPLE) === --}}
                 <form action="{{ route('presences.store')}}" method="POST">
                     @csrf
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> 
+                        <strong>Mode Admin:</strong> Waktu Check-in akan otomatis diset sesuai <strong>Jam Input Sekarang</strong> jika status "Hadir".
+                    </div>
+
                     <div class="mb-3">
-                        <label>Employee</label>
-                        <select name="employee_id" class="form-control">
+                        <label for="employee_id" class="form-label">Pilih Karyawan</label>
+                        <select name="employee_id" class="form-select select2">
+                            <option value="">-- Cari Karyawan --</option>
                             @foreach($employees as $employee)
                             <option value="{{ $employee->id }}">{{ $employee->fullname }}</option>
                             @endforeach
                         </select>
                     </div>
-                    <div class="row">
-                        <div class="col-6"><label>Check In</label><input type="datetime-local" name="check_in" class="form-control"></div>
-                        <div class="col-6"><label>Check Out</label><input type="datetime-local" name="check_out" class="form-control"></div>
+
+                    <div class="mb-3">
+                        <label for="date" class="form-label">Tanggal</label>
+                        <input type="date" class="form-control" name="date" required value="{{ date('Y-m-d') }}">
                     </div>
-                    <div class="my-3"><label>Date</label><input type="date" name="date" class="form-control"></div>
-                    <div class="mb-3"><label>Status</label><select name="status" class="form-control"><option value="present">Present</option><option value="absent">Absent</option></select></div>
-                    <button class="btn btn-primary">Save</button>
+
+                    <div class="mb-3">
+                        <label for="status" class="form-label">Status Kehadiran</label>
+                        <select name="status" id="status" class="form-select">
+                            <option value="present">Hadir (Present)</option>
+                            <option value="absent">Alfa (Absent)</option>
+                            <option value="leave">Cuti/Izin (Leave)</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Simpan Data</button>
+                    <a href="{{ route('presences.index') }}" class="btn btn-secondary">Kembali</a>
                 </form>
 
             @else
-                {{-- === FORM KARYAWAN (Webcam + GPS) === --}}
+
+                {{-- === TAMPILAN KARYAWAN (WEBCAM + GPS) === --}}
                 
                 @if(isset($todayPresence) && $todayPresence->check_out)
                     <div class="alert alert-success text-center">
@@ -90,7 +108,7 @@
                                         <div class="card-body">
                                             <h6>2. Lokasi</h6>
                                             <div id="location-status" class="alert alert-warning py-1 px-2 text-sm">Mencari lokasi...</div>
-                                            {{-- Peta menggunakan Google Maps Embed standard --}}
+                                            {{-- Peta --}}
                                             <iframe id="map-frame" width="100%" height="250" style="border:0" allowfullscreen loading="lazy"></iframe>
                                         </div>
                                     </div>
@@ -123,7 +141,6 @@
                 @if($isCheckIn && !(isset($todayPresence) && $todayPresence->check_out))
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/webcamjs/1.0.26/webcam.min.js"></script>
                 <script>
-                    // 1. Setup Webcam
                     Webcam.set({
                         width: 320,
                         height: 240,
@@ -154,7 +171,6 @@
                         checkReady(); 
                     }
 
-                    // 2. Setup Geolocation (GPS)
                     if (navigator.geolocation) {
                         navigator.geolocation.getCurrentPosition(
                             function(position) {
@@ -167,10 +183,7 @@
                                 const locStatus = document.getElementById('location-status');
                                 locStatus.className = 'alert alert-success py-1 px-2 text-sm';
                                 locStatus.innerHTML = `Lokasi: ${lat.toFixed(5)}, ${long.toFixed(5)}`;
-                                
-                                // === PERBAIKAN URL MAPS ===
-                                // Menggunakan https://maps.google.com/maps?q=...
-                                const mapUrl = `https://maps.google.com/maps?q=${lat},${long}&hl=id&z=16&output=embed`;
+                                const mapUrl = `https://maps.google.com/maps?q=$${lat},${long}&hl=id&z=16&output=embed`;
                                 document.getElementById('map-frame').src = mapUrl;
                                 
                                 checkReady();
@@ -178,23 +191,16 @@
                             function(error) {
                                 const locStatus = document.getElementById('location-status');
                                 locStatus.className = 'alert alert-danger py-1 px-2 text-sm';
-                                switch(error.code) {
-                                    case error.PERMISSION_DENIED:
-                                        locStatus.innerHTML = "Izin lokasi ditolak. Harap izinkan akses lokasi."; break;
-                                    case error.POSITION_UNAVAILABLE:
-                                        locStatus.innerHTML = "Informasi lokasi tidak tersedia."; break;
-                                    case error.TIMEOUT:
-                                        locStatus.innerHTML = "Waktu permintaan lokasi habis."; break;
-                                    default:
-                                        locStatus.innerHTML = "Terjadi kesalahan lokasi."; break;
-                                }
+                                locStatus.innerHTML = "Gagal akses lokasi: " + error.message;
+                            },
+                            {
+                                enableHighAccuracy: true
                             }
                         );
                     } else {
                         document.getElementById('location-status').innerHTML = "Browser ini tidak mendukung Geolocation.";
                     }
 
-                    // 3. Cek apakah tombol submit boleh aktif
                     function checkReady() {
                         const photoVal = document.getElementById('photo').value;
                         const latVal = document.getElementById('latitude').value;
@@ -206,7 +212,6 @@
                         }
                     }
 
-                    // 4. Proses Submit
                     function submitCheckIn() {
                         if(!document.getElementById('photo').value) { alert('Foto wajib diambil!'); return; }
                         if(!document.getElementById('latitude').value) { alert('Lokasi belum ditemukan!'); return; }

@@ -39,10 +39,10 @@
                 </div>
 
                 @if(session('success'))
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        {{ session('success') }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
                 @endif
 
                 <div class="table-responsive">
@@ -72,7 +72,7 @@
                                 <td>{{ $leaveRequest->leave_type }}</td>
                                 <td>
                                     <small>
-                                        {{ \Carbon\Carbon::parse($leaveRequest->start_date)->format('d M') }} - 
+                                        {{ \Carbon\Carbon::parse($leaveRequest->start_date)->format('d M') }} -
                                         {{ \Carbon\Carbon::parse($leaveRequest->end_date)->format('d M Y') }}
                                     </small>
                                 </td>
@@ -81,50 +81,51 @@
                                 </td>
                                 <td>
                                     @if($leaveRequest->attachment)
-                                        <a href="{{ asset('storage/' . $leaveRequest->attachment) }}" target="_blank" class="btn btn-sm btn-light-secondary">
-                                            <i class="bi bi-paperclip"></i> View
-                                        </a>
+                                    <a href="{{ asset('storage/' . $leaveRequest->attachment) }}" target="_blank" class="btn btn-sm btn-light-secondary">
+                                        <i class="bi bi-paperclip"></i> View
+                                    </a>
                                     @else
-                                        <span class="text-muted text-sm">-</span>
+                                    <span class="text-muted text-sm">-</span>
                                     @endif
                                 </td>
                                 <td>
                                     @if($leaveRequest->status == 'approved')
-                                        <span class="badge bg-success">Approved</span>
+                                    <span class="badge bg-success">Approved</span>
                                     @elseif($leaveRequest->status == 'rejected')
-                                        <span class="badge bg-danger">Rejected</span>
+                                    <span class="badge bg-danger">Rejected</span>
                                     @else
-                                        <span class="badge bg-warning text-dark">Pending</span>
+                                    <span class="badge bg-warning text-dark">Pending</span>
                                     @endif
                                 </td>
                                 <td>
                                     {{-- TOMBOL AKSI UNTUK HR MANAGER (APPROVE/REJECT) --}}
                                     @can('leave_confirm_reject')
-                                        @if($leaveRequest->status == 'pending')
-                                            <a href="{{ route('leave-requests.confirm', $leaveRequest->id) }}" class="btn btn-success btn-sm" title="Approve" onclick="return confirm('Setujui pengajuan ini?')">
-                                                <i class="bi bi-check-lg"></i>
-                                            </a>
-                                            <a href="{{ route('leave-requests.reject', $leaveRequest->id) }}" class="btn btn-danger btn-sm" title="Reject" onclick="return confirm('Tolak pengajuan ini?')">
-                                                <i class="bi bi-x-lg"></i>
-                                            </a>
-                                        @endif
+                                    @if($leaveRequest->status == 'pending')
+                                    <a href="{{ route('leave-requests.confirm', encrypt($leaveRequest->id)) }}" class="btn btn-success btn-sm" title="Approve" onclick="return confirm('Setujui pengajuan ini?')">
+                                        <i class="bi bi-check-lg"></i>
+                                    </a>
+
+                                    <a href="{{ route('leave-requests.reject', encrypt($leaveRequest->id)) }}" class="btn btn-danger btn-sm" title="Reject" onclick="return confirm('Tolak pengajuan ini?')">
+                                        <i class="bi bi-x-lg"></i>
+                                    </a>
+                                    @endif
                                     @endcan
 
                                     {{-- TOMBOL AKSI UNTUK PEMILIK (EDIT/DELETE) --}}
                                     {{-- Hanya bisa edit/hapus jika status masih pending --}}
                                     @if($leaveRequest->status == 'pending')
-                                        @if(Auth::user()->employee_id == $leaveRequest->employee_id || Auth::user()->can('leave_confirm_reject'))
-                                            <a href="{{ route('leave-requests.edit', $leaveRequest->id) }}" class="btn btn-warning btn-sm" title="Edit">
-                                                <i class="bi bi-pencil"></i>
-                                            </a>
-                                            <form action="{{ route('leave-requests.destroy', $leaveRequest->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Batalkan pengajuan ini?');">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-secondary btn-sm" title="Delete">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </form>
-                                        @endif
+                                    @if(Auth::user()->employee_id == $leaveRequest->employee_id || Auth::user()->can('leave_confirm_reject'))
+                                    <a href="{{ route('leave-requests.edit', encrypt($leaveRequest->id)) }}" class="btn btn-warning btn-sm" title="Edit">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <form action="{{ route('leave-requests.destroy', encrypt($leaveRequest->id)) }}" method="POST" class="d-inline" onsubmit="return confirm('Batalkan pengajuan ini?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-secondary btn-sm" title="Delete">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                    @endif
                                     @endif
                                 </td>
                             </tr>
@@ -140,7 +141,7 @@
 
 @push('scripts')
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function() {
         const table = document.getElementById('table1');
         if (table) {
             new simpleDatatables.DataTable(table, {

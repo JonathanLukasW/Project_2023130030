@@ -6,20 +6,17 @@ use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use App\Models\User;
-use App\Models\Employee;
 
 class PermissionSeeder extends Seeder
 {
-   public function run(): void
+    public function run(): void
     {
-        // 1. Hapus Cache Permission Spatie (Wajib)
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // --- DAFTAR SEMUA IZIN RESMI ---
         $permissions = [
             'dashboard_view',
             'task_view', 
-            'task_manage', // Izin View All/Manage ada
+            'task_manage', 
             'task_create', 'task_edit', 'task_delete', 'task_mark_status',
             'employee_view', 'employee_manage', 
             'department_manage', 
@@ -30,22 +27,23 @@ class PermissionSeeder extends Seeder
             'permission_manage', 
         ];
 
-        // 2. Buat semua izin yang ada di array
         foreach ($permissions as $permission) {
             Permission::firstOrCreate(['name' => $permission]);
         }
-        
-        // 3. AMBIL SEMUA IZIN YANG ADA DI DATABASE
-        $allPermissions = Permission::all();
-        
 
+        $allPermissions = Permission::all();
         $hrManagerRole = Role::firstOrCreate(['name' => 'HR Manager']);
-        // 4. HR Manager mendapatkan SEMUA Izin yang sudah terdaftar
-        // Kita pakai syncPermissions untuk memastikan tidak ada yang terlewat
         $hrManagerRole->syncPermissions($allPermissions); 
 
-        // 5. Sinkronisasi Role Karyawan Lain (Ini penting untuk membatasi mereka)
-        
+        $employeeRole = Role::firstOrCreate(['name' => 'Employee']);
+        $employeeRole->syncPermissions([
+            'dashboard_view', 
+            'task_view', 
+            'task_mark_status', 
+            'presence_create', 
+            'leave_manage'
+        ]);
+
         $developerRole = Role::firstOrCreate(['name' => 'Developer']);
         $developerRole->syncPermissions(['dashboard_view', 'task_view', 'task_mark_status', 'presence_create', 'leave_manage']);
 

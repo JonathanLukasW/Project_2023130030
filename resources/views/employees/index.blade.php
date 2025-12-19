@@ -82,8 +82,8 @@
 
                             <td>
 
-                                <a href="{{ route('employees.show', $employee->id) }}" target="_blank" class="btn btn-info btn-sm" rel="noopener noreferrer">view</a>
-                                <a href="{{ route('employees.edit', $employee->id) }}" class="btn btn-warning btn-sm">edit</a>
+                                <a href="{{ route('employees.show', encrypt($employee->id)) }}" target="_blank" class="btn btn-info btn-sm" rel="noopener noreferrer">view</a>
+                                <a href="{{ route('employees.edit', encrypt($employee->id)) }}" class="btn btn-warning btn-sm">edit</a>
                                 <form action="{{ route('employees.destroy', $employee->id) }}" method="POST" class="d-inline">
                                     @csrf 
                                     @method('DELETE')

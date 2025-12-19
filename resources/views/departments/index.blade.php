@@ -64,8 +64,8 @@
                                 @endif
                             </td>
                             <td>
-                                <a href="{{ route('departments.edit', $department->id) }}" class="btn btn-warning btn-sm">Edit</a>
-                                <form action="{{ route('departments.destroy', $department->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this department?');">
+                                <a href="{{ route('departments.edit', encrypt($department->id))}}" class="btn btn-warning btn-sm">Edit</a>
+                                <form action="{{ route('departments.destroy', encrypt($department->id)) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this department?');">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="btn btn-danger btn-sm">Delete</button>

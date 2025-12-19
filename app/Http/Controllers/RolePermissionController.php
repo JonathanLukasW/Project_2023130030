@@ -19,21 +19,15 @@ class RolePermissionController extends Controller
 
         $rolePermissions = [];
         foreach ($roles as $role) {
-            // Kita ambil 'name'-nya saja dari permission yang dimiliki role
             $rolePermissions[$role->id] = $role->permissions->pluck('name')->all();
         }
 
-        // 4. Kirim semua data ini ke view
         return view('permissions.index', compact('permissions', 'roles', 'rolePermissions'));
     }
 
-    /**
-     * Menyimpan perubahan Izin (Permission) dari form.
-     */
     public function update(Request $request)
     {
         try {
-            // Ambil semua ID Role yang dikirim dari form (kecuali HR Manager)
             $roleIds = Role::where('name', '!=', 'HR Manager')->pluck('id');
 
             foreach ($roleIds as $roleId) {
@@ -43,8 +37,6 @@ class RolePermissionController extends Controller
 
                 $role->syncPermissions($permissions);
             }
-
-            // (Opsional) Hapus cache Spatie biar perubahannya langsung terasa
             app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
             return redirect()->route('permissions.index')->with('success', 'Permissions updated successfully.');

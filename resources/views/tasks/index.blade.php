@@ -11,8 +11,8 @@
     <div class="page-title">
         <div class="row">
             <div class="col-12 col-md-6 order-md-1 order-last">
-                <h3>Tasks Management</h3>
-                <p class="text-subtitle text-muted">Daftar tugas yang harus diselesaikan dan yang sudah selesai.</p>
+                <h3>Task Management</h3>
+                <p class="text-subtitle text-muted">Kelola tugas dan deadline karyawan.</p>
             </div>
             <div class="col-12 col-md-6 order-md-2 order-first">
                 <nav aria-label="breadcrumb" class="breadcrumb-header float-start float-lg-end">
@@ -24,26 +24,26 @@
             </div>
         </div>
     </div>
-    
+
     <section class="section">
         <div class="card">
             <div class="card-header">
-                <h5 class="card-title">Task List</h5>
-            </div>
-            <div class="card-body">
-
-                <div class="d-flex">
-                    @can('task_create')
-                    <a href="{{ route('tasks.create')}}" class="btn btn-primary mb-3 ms-auto">New Task</a>
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title">Daftar Tugas</h5>
+                    @can('task_manage')
+                    <a href="{{ route('tasks.create') }}" class="btn btn-primary">
+                        <i class="bi bi-plus"></i> New Task
+                    </a>
                     @endcan
                 </div>
-
+            </div>
+            <div class="card-body">
                 @if(session('success'))
-                <div class="alert alert-success">{{ session('success') }}</div>
+                    <div class="alert alert-success">{{ session('success') }}</div>
                 @endif
 
                 <div class="table-responsive">
-                    <table class="table table-striped" id="table1"> 
+                    <table class="table table-striped" id="table1">
                         <thead>
                             <tr>
                                 <th>Title</th>
@@ -57,38 +57,38 @@
                             @foreach($tasks as $task)
                             <tr>
                                 <td>{{ $task->title }}</td>
-                                <td>{{ $task->employee->fullname ?? 'N/A' }}</td>
-                                <td>{{ $task->due_date }}</td>
+                                <td>{{ $task->employee->fullname ?? '-' }}</td>
+                                <td>{{ \Carbon\Carbon::parse($task->due_date)->format('d M Y') }}</td>
                                 <td>
-                                    @if($task->status == 'pending')
-                                    <span class="badge bg-warning">Pending</span>
-                                    @elseif($task->status == 'completed')
-                                    <span class="badge bg-success">Completed</span>
+                                    @if($task->status == 'completed')
+                                        <span class="badge bg-success">Completed</span>
+                                    @elseif($task->status == 'pending')
+                                        <span class="badge bg-warning text-dark">Pending</span>
                                     @else
-                                    <span class="badge bg-info">{{ ucfirst($task->status) }}</span>
+                                        <span class="badge bg-secondary">Canceled</span>
                                     @endif
                                 </td>
                                 <td>
-                                    {{-- Menggunakan Helper encodeId() untuk menyembunyikan ID (Poin 8) --}}
-                                    <a href="{{ route('tasks.show', encodeId($task->id)) }}" class="btn btn-info btn-sm">View</a>
-
-                                    @can('task_mark_status')
-                                        @if($task->status == 'pending')
-                                        <a href="{{ route('tasks.done', $task->id) }}" class="btn btn-success btn-sm">Mark as Done</a>
-                                        @else
-                                        <a href="{{ route('tasks.pending', $task->id) }}" class="btn btn-warning btn-sm">Mark as Pending</a>
-                                        @endif
-                                    @endcan
-
-                                    @can('task_edit')
-                                    <a href="{{ route('tasks.edit', $task->id) }}" class="btn btn-warning btn-sm">Edit</a>
-                                    @endcan
+                                    {{-- TOMBOL ACTION DENGAN ENCRYPT ID --}}
                                     
-                                    @can('task_delete')
-                                    <form action="{{ route('tasks.destroy', $task->id) }}" method="POST" style="display:inline;">
+                                    {{-- Show --}}
+                                    <a href="{{ route('tasks.show', encrypt($task->id)) }}" class="btn btn-info btn-sm">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+
+                                    @can('task_manage')
+                                    {{-- Edit --}}
+                                    <a href="{{ route('tasks.edit', encrypt($task->id)) }}" class="btn btn-warning btn-sm">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+
+                                    {{-- Delete --}}
+                                    <form action="{{ route('tasks.destroy', encrypt($task->id)) }}" method="POST" class="d-inline" onsubmit="return confirm('Yakin hapus tugas ini?')">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this task?')">Delete</button>
+                                        <button type="submit" class="btn btn-danger btn-sm">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
                                     </form>
                                     @endcan
                                 </td>
@@ -97,23 +97,19 @@
                         </tbody>
                     </table>
                 </div>
-
             </div>
         </div>
     </section>
 </div>
+@endsection
 
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const table = document.getElementById('table1');
         if (table) {
-            new simpleDatatables.DataTable(table, {
-                searchable: true,
-                perPageSelect: [5, 10, 20, 50],
-            });
+            new simpleDatatables.DataTable(table);
         }
     });
 </script>
 @endpush
-@endsection

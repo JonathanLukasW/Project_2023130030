@@ -12,13 +12,13 @@
         <div class="row">
             <div class="col-12 col-md-6 order-md-1 order-last">
                 <h3>Tasks</h3>
-                <p class="text-subtitle text-muted">Handle tugas employee</p>
+                <p class="text-subtitle text-muted">Edit data tugas</p>
             </div>
             <div class="col-12 col-md-6 order-md-2 order-first">
                 <nav aria-label="breadcrumb" class="breadcrumb-header float-start float-lg-end">
                     <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="index.html">Dashboard</a></li>
-                        <li class="breadcrumb-item"><a href="index.html">Task</a></li>
+                        <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{{ route('tasks.index') }}">Task</a></li>
                         <li class="breadcrumb-item active" aria-current="page">Edit</li>
                     </ol>
                 </nav>
@@ -28,13 +28,12 @@
     <section class="section">
         <div class="card">
             <div class="card-header">
-                <h5 class="card-title">
-                    TaskList
-                </h5> 
+                <h5 class="card-title">Edit Task</h5> 
             </div>
             <div class="card-body">
 
-                <form action="{{ route('tasks.update', $task->id) }}" method="POST">
+                {{-- PERBAIKAN 1: Tambahkan encrypt($task->id) pada route update --}}
+                <form action="{{ route('tasks.update', encrypt($task->id)) }}" method="POST">
                     @csrf 
                     @method('PUT')
 
@@ -65,7 +64,12 @@
                     
                     <div class="mb-3">
                         <label for="" class="form-label">Due Date</label>
-                        <input type="datetime-local" class="form-control date @error('due_date') is-invalid @enderror" value="{{ @old('due_date', $task->due_date) }}" name="due_date" required>
+                        {{-- PERBAIKAN 2: Format Tanggal harus Y-m-d\TH:i agar terbaca di input datetime-local --}}
+                        <input type="datetime-local" 
+                               class="form-control @error('due_date') is-invalid @enderror" 
+                               value="{{ old('due_date', \Carbon\Carbon::parse($task->due_date)->format('Y-m-d\TH:i')) }}" 
+                               name="due_date" 
+                               required>
                         @error('due_date')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
@@ -73,9 +77,10 @@
                     
                     <div class="mb-3">
                         <label for="" class="form-label">Status</label>
-                        <select name="status" id="status" class="form-control @error('status') is-invalid @enderror">
+                        <select name="status" id="status" class="form-select @error('status') is-invalid @enderror">
                             <option value="pending" @if(old('status', $task->status) == 'pending') selected @endif>Pending</option>
-                            <option value="completed" @if(old('status', $task->status) == 'completed') selected @endif>completed</option>
+                            <option value="completed" @if(old('status', $task->status) == 'completed') selected @endif>Completed</option>
+                            <option value="canceled" @if(old('status', $task->status) == 'canceled') selected @endif>Canceled</option>
                         </select>
                         @error('status')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -84,14 +89,16 @@
 
                     <div class="mb-3">
                         <label for="" class="form-label">Description</label>
-                        <textarea name="description" class="form-control @error('description') is-invalid @enderror">{{ old('description', $task->description)}}</textarea>
+                        <textarea name="description" class="form-control @error('description') is-invalid @enderror" rows="4">{{ old('description', $task->description) }}</textarea>
                         @error('description')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
 
-                    <button type="submit" class="btn btn-primary">Update Task</button>
-                    <a href="{{ route('tasks.index') }}" class="btn btn-secondary">Back</a>
+                    <div class="d-flex justify-content-end">
+                        <a href="{{ route('tasks.index') }}" class="btn btn-secondary me-2">Batal</a>
+                        <button type="submit" class="btn btn-primary">Update Task</button>
+                    </div>
 
                 </form>
             </div>

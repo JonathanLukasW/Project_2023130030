@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
+use Illuminate\Contracts\Encryption\DecryptException;
 
 class PresenceController extends Controller
 {
@@ -16,7 +16,6 @@ class PresenceController extends Controller
     {
         $query = Presence::with('employee');
 
-        // Filter untuk Admin
         if ($request->filled('employee_id') && Auth::user()->can('presence_view_all')) {
             $query->where('employee_id', $request->employee_id);
         }
@@ -26,8 +25,6 @@ class PresenceController extends Controller
         if ($request->filled('date')) {
             $query->where('date', $request->date);
         }
-
-        // Batasan Akses Karyawan Biasa
         if (!Auth::user()->can('presence_view_all')) {
             $query->where('employee_id', Auth::user()->employee_id);
         }
@@ -40,10 +37,9 @@ class PresenceController extends Controller
 
     public function create()
     {
-        $employees = Employee::all();
+        $employees = Employee::orderBy('fullname')->get();
         
-        // Cek status absen hari ini untuk Karyawan
-        $isCheckIn = true; // Default
+        $isCheckIn = true; 
         $todayPresence = null;
 
         if (!Auth::user()->can('presence_view_all')) {
@@ -52,7 +48,7 @@ class PresenceController extends Controller
                 ->first();
 
             if ($todayPresence && $todayPresence->check_in && is_null($todayPresence->check_out)) {
-                $isCheckIn = false; // Berarti saatnya Check Out
+                $isCheckIn = false; 
             }
         }
 
@@ -61,128 +57,133 @@ class PresenceController extends Controller
 
     public function store(Request $request)
     {
-        // === LOGIC ADMIN (Manual) ===
         if (Auth::user()->can('presence_view_all')) {
             $validated = $request->validate([
                 'employee_id' => 'required|exists:employees,id',
-                'check_in' => 'nullable|date_format:Y-m-d H:i:s',
-                'check_out' => 'nullable|date_format:Y-m-d H:i:s',
                 'date' => 'required|date_format:Y-m-d',
                 'status' => 'required|in:present,absent,leave',
             ]);
 
-            if ($validated['status'] !== 'present') {
-                $validated['check_in'] = null;
-                $validated['check_out'] = null;
+            $checkIn = null;
+            $checkOut = null;
+
+            if ($validated['status'] == 'present') {
+
+                $currentReviewTime = now()->format('H:i:s');
+                $checkIn = Carbon::parse($validated['date'] . ' ' . $currentReviewTime);
             }
+
+            Presence::create([
+                'employee_id' => $validated['employee_id'],
+                'date' => $validated['date'],
+                'status' => $validated['status'],
+                'check_in' => $checkIn,
+                'check_out' => null,
+            ]);
             
-            Presence::create($validated);
             return redirect()->route('presences.index')->with('success', 'Data presensi berhasil disimpan (Manual).');
         } 
-        
-        // === LOGIC KARYAWAN (Check-in / Check-out) ===
+
         else {
             $employeeId = Auth::user()->employee_id;
             $today = Carbon::now()->format('Y-m-d');
-
-            // Cek apakah ini Check-in atau Check-out
-            $type = $request->input('type'); // 'in' atau 'out'
+            $type = $request->input('type'); 
 
             if ($type == 'out') {
-                // --- PROSES CHECK OUT ---
-                $presence = Presence::where('employee_id', $employeeId)
-                    ->where('date', $today)
-                    ->first();
-                
+                $presence = Presence::where('employee_id', $employeeId)->where('date', $today)->first();
                 if ($presence) {
-                    $presence->update([
-                        'check_out' => Carbon::now(),
-                    ]);
-                    return redirect()->route('presences.index')->with('success', 'Berhasil Check-out! Hati-hati di jalan.');
-                } else {
-                    return redirect()->back()->with('error', 'Data check-in tidak ditemukan hari ini.');
+                    $presence->update(['check_out' => Carbon::now()]);
+                    return redirect()->route('presences.index')->with('success', 'Berhasil Check-out!');
                 }
-
+                return redirect()->back()->with('error', 'Data check-in tidak ditemukan.');
             } else {
-                // --- PROSES CHECK IN ---
-                
-                // 1. Cek dulu jangan sampai double check-in
                 $exists = Presence::where('employee_id', $employeeId)->where('date', $today)->exists();
                 if ($exists) {
                     return redirect()->route('presences.index')->with('error', 'Anda sudah absen hari ini.');
                 }
 
-                // 2. Validasi Input
                 $request->validate([
                     'latitude' => 'required',
                     'longitude' => 'required',
-                    'photo' => 'required', // Foto Wajib
+                    'photo' => 'required',
                 ]);
 
-                // 3. Proses Simpan Foto
                 $photoPath = null;
                 if ($request->filled('photo')) {
-                    $image = $request->photo;  // data:image/jpeg;base64,...
-                    
-                    // Decode Base64 sederhana
+                    $image = $request->photo;
                     if (strpos($image, 'base64,') !== false) {
                         $image = explode('base64,', $image)[1];
                     }
                     $image = str_replace(' ', '+', $image);
                     $imageData = base64_decode($image);
-
-                    // Buat nama file unik
                     $fileName = 'presence_' . $employeeId . '_' . time() . '.jpeg';
-                    
-                    // Simpan ke storage/app/public/presences
                     Storage::disk('public')->put('presences/' . $fileName, $imageData);
-                    
                     $photoPath = 'presences/' . $fileName;
                 }
 
-                // 4. Simpan ke Database
                 Presence::create([
                     'employee_id' => $employeeId,
                     'date' => $today,
                     'check_in' => Carbon::now(),
-                    'check_out' => null, // Masih kosong
                     'status' => 'present',
                     'latitude' => $request->latitude,
                     'longitude' => $request->longitude,
                     'photo' => $photoPath
                 ]);
 
-                return redirect()->route('presences.index')->with('success', 'Berhasil Check-in! Selamat bekerja.');
+                return redirect()->route('presences.index')->with('success', 'Berhasil Check-in!');
             }
         }
     }
 
-    // ... method edit, update, destroy biarkan sama seperti sebelumnya ...
-    public function edit(Presence $presence)
+    public function edit($id)
     {
-        $employees = Employee::all();
-        return view('presences.edit', compact('presence', 'employees'));
-    }
-
-    public function update(Request $request, Presence $presence)
-    {
-        $validated = $request->validate([
-            'employee_id' => 'required|exists:employees,id',
-            'check_in' => 'nullable|date_format:Y-m-d H:i:s',
-            'check_out' => 'nullable|date_format:Y-m-d H:i:s',
-            'date' => 'required|date_format:Y-m-d',
-            'status' => 'required|in:present,absent,leave',
-        ]);
-        if ($validated['status'] !== 'present') {
-            $validated['check_in'] = null;
-            $validated['check_out'] = null;
+        try {
+            $decryptedId = decrypt($id);
+            $presence = Presence::findOrFail($decryptedId);
+            $employees = Employee::orderBy('fullname')->get();
+            return view('presences.edit', compact('presence', 'employees'));
+        } catch (DecryptException $e) {
+            abort(404);
         }
-        $presence->update($validated);
-        return redirect()->route('presences.index')->with('success', 'Presence updated successfully.');
     }
 
-    public function destroy(Presence $presence){
-        $presence->delete();
-        return redirect()->route('presences.index')->with('success', 'Presence deleted successfully.');
+    public function update(Request $request, $id)
+    {
+       try {
+            $decryptedId = decrypt($id);
+            $presence = Presence::findOrFail($decryptedId);
+
+            $validated = $request->validate([
+                'employee_id' => 'required|exists:employees,id',
+                'date' => 'required|date',
+                'status' => 'required|in:present,absent,leave',
+                'check_in' => 'nullable|date',
+                'check_out' => 'nullable|date',
+            ]);
+
+            if ($validated['status'] != 'present') {
+                $validated['check_in'] = null;
+                $validated['check_out'] = null;
+            }
+
+            $presence->update($validated);
+            
+            return redirect()->route('presences.index')->with('success', 'Data absensi berhasil diperbarui.');
+        } catch (DecryptException $e) {
+            abort(404);
+        }
+    }
+
+    public function destroy($id)
+    {
+        try {
+            $decryptedId = decrypt($id);
+            $presence = Presence::findOrFail($decryptedId);
+            $presence->delete();
+            return redirect()->route('presences.index')->with('success', 'Presence deleted successfully.');
+        } catch (DecryptException $e) {
+            abort(404);
+        }
     }
 }

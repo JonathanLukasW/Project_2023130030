@@ -2,53 +2,72 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Department;
+use Illuminate\Http\Request;
+use Illuminate\Contracts\Encryption\DecryptException;
 
 class DepartmentController extends Controller
 {
-    public function index(){
+    public function index()
+    {
         $departments = Department::all();
         return view('departments.index', compact('departments'));
     }
 
-    public function create(){
+    public function create()
+    {
         return view('departments.create');
     }
 
-    public function store(Request $request){
+    public function store(Request $request)
+    {
         $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'status' => 'required|String|max:50'
         ]);
 
         Department::create($request->all());
         return redirect()->route('departments.index')->with('success', 'Department created successfully.');
     }
 
-    public function edit($id){
-        $department = Department::findOrFail($id);
-        return view('departments.edit', compact('department'));
+    public function edit($id)
+    {
+        try {
+            $decryptedId = decrypt($id);
+            $department = Department::findOrFail($decryptedId);
+            return view('departments.edit', compact('department'));
+        } catch (DecryptException $e) {
+            abort(404);
+        }
     }
 
-    public function update(Request $request, $id){
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'status' => 'required|String|max:50'
-        ]);
+    public function update(Request $request, $id)
+    {
+        try {
+            $decryptedId = decrypt($id);
+            $department = Department::findOrFail($decryptedId);
+            
+            $request->validate([
+                'name' => 'required|string|max:255',
+                'description' => 'nullable|string',
+            ]);
 
-        $department = Department::findOrFail($id);
-        $department->update($request->all());
-
-        return redirect()->route('departments.index')->with('success', 'Department updated successfully.');
+            $department->update($request->all());
+            return redirect()->route('departments.index')->with('success', 'Department updated successfully.');
+        } catch (DecryptException $e) {
+            abort(404);
+        }
     }
 
-    public function destroy(int $id){
-        $department = Department::findOrFail($id);
-        $department->delete();
-
-        return redirect()->route('departments.index')->with('success', 'Department deleted successfully.');
-    }   
+    public function destroy($id)
+    {
+        try {
+            $decryptedId = decrypt($id);
+            $department = Department::findOrFail($decryptedId);
+            $department->delete();
+            return redirect()->route('departments.index')->with('success', 'Department deleted successfully.');
+        } catch (DecryptException $e) {
+            abort(404);
+        }
+    }
 }

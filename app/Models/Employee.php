@@ -31,10 +31,6 @@ class Employee extends Model
         return $this->belongsTo(Position::class, 'position_id');
     }
 
-    /**
-     * Relasi: Employee hasOne User (Satu Employee terhubung ke satu akun User)
-     * foreign key 'employee_id' ada di tabel User.
-     */
     public function user()
     {
         return $this->hasOne(User::class, 'employee_id');

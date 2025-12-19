@@ -2,149 +2,154 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\LeaveRequest;
 use App\Models\Employee;
-// --- PERUBAHAN 1: Tambahkan 'Auth' ---
+use App\Models\Presence;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Contracts\Encryption\DecryptException;
+use Illuminate\Support\Facades\Storage;
+use Carbon\CarbonPeriod;
 
 class LeaveRequestController extends Controller
 {
     public function index()
     {
         $query = LeaveRequest::with('employee');
-
-        // Cek izin
-        if (!Auth::user()->can('leave_confirm_reject')) {
+        if (!Auth::user()->can('leave_manage')) {
             $query->where('employee_id', Auth::user()->employee_id);
         }
         
         $leaveRequests = $query->orderBy('start_date', 'desc')->get();
-
-        // --- TAMBAHAN: Ambil data employees untuk dropdown filter/create di view index ---
-        $employees = Employee::orderBy('fullname', 'asc')->get(); 
-
-        // Kirim $employees ke view
-        return view('leave-requests.index', compact('leaveRequests', 'employees'));
+        return view('leave-requests.index', compact('leaveRequests'));
     }
 
     public function create()
     {
-        $employees = Employee::all();
-        return view('leave-requests.create', compact('employees'));
+        return view('leave-requests.create');
     }
 
     public function store(Request $request)
     {
-        // ... validasi yang sudah ada ...
+        $employeeId = Auth::user()->employee_id;
 
-        // Tambah validasi file (opsional, max 2MB, gambar/pdf)
+        if (Auth::user()->can('leave_manage') && $request->filled('employee_id')) {
+            $employeeId = $request->employee_id;
+        }
+
         $request->validate([
-            // ... rule lain ...
-            'attachment' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+            'leave_type' => 'required',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+            'reason' => 'nullable|string',
+            'attachment' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
         ]);
 
-        // Siapkan data
-        $data = $request->except(['attachment']); // Ambil semua kecuali file dulu
-
-        // Logic Upload File
+        $attachmentPath = null;
         if ($request->hasFile('attachment')) {
-            // Simpan ke folder 'public/leave_attachments'
-            $path = $request->file('attachment')->store('leave_attachments', 'public');
-            $data['attachment'] = $path;
+            $attachmentPath = $request->file('attachment')->store('leave_attachments', 'public');
         }
 
-        $data['status'] = 'pending';
+        LeaveRequest::create([
+            'employee_id' => $employeeId,
+            'leave_type' => $request->leave_type,
+            'start_date' => $request->start_date,
+            'end_date' => $request->end_date,
+            'reason' => $request->reason,
+            'status' => 'pending',
+            'attachment' => $attachmentPath
+        ]);
 
-        // Logic Employee ID otomatis (jika user biasa) -> sama seperti kodemu sebelumnya
-        if (!Auth::user()->can('leave_confirm_reject')) {
-            $data['employee_id'] = Auth::user()->employee_id;
-        }
-
-        LeaveRequest::create($data);
-
-        return redirect()->route('leave-requests.index')->with('success', 'Request created.');
-    }
-    public function edit(LeaveRequest $leaveRequest)
-    {
-        // --- PERUBAHAN 4: TAMBAHAN KEAMANAN ---
-        // Cek otorisasi:
-        // 1. User adalah admin (bisa confirm/reject)
-        // ATAU
-        // 2. Ini adalah request miliknya DAN statusnya masih 'pending'
-        if (
-            !Auth::user()->can('leave_confirm_reject') &&
-            ($leaveRequest->employee_id !== Auth::user()->employee_id || $leaveRequest->status !== 'pending')
-        ) {
-            abort(403, 'Unauthorized action. You can only edit your own pending requests.');
-        }
-
-        $employees = Employee::all();
-        return view('leave-requests.edit', compact('leaveRequest', 'employees'));
+        return redirect()->route('leave-requests.index')->with('success', 'Pengajuan cuti berhasil dibuat.');
     }
 
-    public function update(Request $request, LeaveRequest $leaveRequest)
+    public function edit($id)
     {
-        // --- PERUBAHAN 5: TAMBAHAN KEAMANAN ---
-        // Cek otorisasi yang sama
-        if (
-            !Auth::user()->can('leave_confirm_reject') &&
-            ($leaveRequest->employee_id !== Auth::user()->employee_id || $leaveRequest->status !== 'pending')
-        ) {
-            abort(403, 'Unauthorized action.');
+        try {
+            $decryptedId = decrypt($id);
+            $leaveRequest = LeaveRequest::findOrFail($decryptedId);
+            
+            if ($leaveRequest->employee_id != Auth::user()->employee_id && !Auth::user()->can('leave_manage')) {
+                abort(403);
+            }
+
+            $employees = Employee::where('status', 'active')->orderBy('fullname')->get();
+
+            return view('leave-requests.edit', compact('leaveRequest', 'employees'));
+
+        } catch (DecryptException $e) {
+            abort(404);
         }
-
-        // Admin bisa ganti 'employee_id'
-        if (Auth::user()->can('leave_confirm_reject')) {
-            $validated = $request->validate([
-                'employee_id' => 'required|exists:employees,id',
-                'leave_type' => 'required|string',
-                'start_date' => 'required|date',
-                'end_date' => 'required|date|after_or_equal:start_date',
-            ]);
-        } else {
-            // Karyawan biasa tidak bisa ganti 'employee_id'
-            $validated = $request->validate([
-                'leave_type' => 'required|string',
-                'start_date' => 'required|date',
-                'end_date' => 'required|date|after_or_equal:start_date',
-            ]);
-            // Pastikan 'employee_id' tidak di-override
-            $validated['employee_id'] = Auth::user()->employee_id;
-        }
-
-        $leaveRequest->update($validated);
-
-        return redirect()->route('leave-requests.index')->with('success', 'Leave request updated successfully.');
     }
 
-    public function confirm(int $id)
+    public function update(Request $request, $id)
     {
-        $leaveRequest = LeaveRequest::findOrFail($id);
-        $leaveRequest->update(['status' => 'approved']);
+        try {
+            $decryptedId = decrypt($id);
+            $leaveRequest = LeaveRequest::findOrFail($decryptedId);
 
-        return redirect()->route('leave-requests.index')->with('success', 'Leave request confirmed successfully.');
-    }
+            $leaveRequest->update($request->only(['leave_type', 'start_date', 'end_date', 'reason']));
 
-    public function reject(int $id)
-    {
-        $leaveRequest = LeaveRequest::findOrFail($id);
-        $leaveRequest->update(['status' => 'rejected']);
-
-        return redirect()->route('leave-requests.index')->with('success', 'Leave request rejected successfully.');
-    }
-
-    public function destroy(LeaveRequest $leaveRequest)
-    {
-        if (
-            !Auth::user()->can('leave_confirm_reject') &&
-            ($leaveRequest->employee_id !== Auth::user()->employee_id || $leaveRequest->status !== 'pending')
-        ) {
-            abort(403, 'Unauthorized action. You can only delete your own pending requests.');
+            return redirect()->route('leave-requests.index')->with('success', 'Pengajuan cuti diperbarui.');
+        } catch (DecryptException $e) {
+            abort(404);
         }
+    }
 
-        $leaveRequest->delete();
+    public function destroy($id)
+    {
+        try {
+            $decryptedId = decrypt($id); 
+            $leaveRequest = LeaveRequest::findOrFail($decryptedId);
+            
+            if ($leaveRequest->attachment) {
+                Storage::disk('public')->delete($leaveRequest->attachment);
+            }
 
-        return redirect()->route('leave-requests.index')->with('success', 'Leave request deleted successfully.');
+            $leaveRequest->delete();
+            return redirect()->route('leave-requests.index')->with('success', 'Pengajuan dibatalkan.');
+        } catch (DecryptException $e) {
+            abort(404);
+        }
+    }
+
+    public function confirm($id) {
+        $this->updateStatus($id, 'approved');
+        return back()->with('success', 'Cuti disetujui & Absensi diperbarui.');
+    }
+
+    public function reject($id) {
+        $this->updateStatus($id, 'rejected');
+        return back()->with('success', 'Cuti ditolak.');
+    }
+
+    private function updateStatus($id, $status) {
+        try {
+            $decryptedId = decrypt($id);
+            $leave = LeaveRequest::findOrFail($decryptedId);
+            
+            $leave->update(['status' => $status]);
+
+            if ($status == 'approved') {
+                $period = CarbonPeriod::create($leave->start_date, $leave->end_date);
+
+                foreach ($period as $date) {
+                    Presence::updateOrCreate(
+                        [
+                            'employee_id' => $leave->employee_id,
+                            'date' => $date->format('Y-m-d'),
+                        ],
+                        [
+                            'status' => 'leave',
+                            'check_in' => null,
+                            'check_out' => null,
+                        ]
+                    );
+                }
+            }
+
+        } catch (DecryptException $e) {
+            abort(404);
+        }
     }
 }

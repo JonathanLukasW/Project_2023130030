@@ -17,8 +17,8 @@
             <div class="col-12 col-md-6 order-md-2 order-first">
                 <nav aria-label="breadcrumb" class="breadcrumb-header float-start float-lg-end">
                     <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="index.html">Dashboard</a></li>
-                        <li class="breadcrumb-item"><a href="index.html">Position</a></li>
+                        <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{{ route('positions.index') }}">Position</a></li>
                         <li class="breadcrumb-item active" aria-current="page">Index</li>
                     </ol>
                 </nav>
@@ -29,7 +29,7 @@
         <div class="card">
             <div class="card-header">
                 <h5 class="card-title">
-                    role
+                    Positions List
                 </h5>
             </div>
             <div class="card-body">
@@ -46,6 +46,7 @@
                     <thead>
                         <tr>
                             <th>Title</th>
+                            <th>Base Salary</th> {{-- KOLOM BARU --}}
                             <th>Description</th>
                             <th>Actions</th>
                         </tr>
@@ -54,10 +55,14 @@
                         @foreach($positions as $position)
                         <tr>
                             <td>{{ $position->title}}</td>
+                            
+                            {{-- TAMPILKAN GAJI FORMAT RUPIAH --}}
+                            <td>Rp {{ number_format($position->base_salary, 0, ',', '.') }}</td>
+                            
                             <td>{{ $position->description }}</td>
                             <td>
-                                <a href="{{ route('positions.edit', $position->id) }}" class="btn btn-warning btn-sm">Edit</a>
-                                <form action="{{ route('positions.destroy', $position->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this position?');">
+                                <a href="{{ route('positions.edit', encrypt($position->id)) }}" class="btn btn-warning btn-sm">Edit</a>
+                                <form action="{{ route('positions.destroy', encrypt($position->id)) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this position?');">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="btn btn-danger btn-sm">Delete</button>
@@ -74,3 +79,14 @@
     </section>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const table = document.getElementById('table1');
+        if (table) {
+            new simpleDatatables.DataTable(table);
+        }
+    });
+</script>
+@endpush

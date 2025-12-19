@@ -8,15 +8,12 @@ use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
 
         $this->call([
             HumanResourceSeeder::class, 
-            PermissionSeeder::class, // <-- INI YANG KETINGGALAN
+            PermissionSeeder::class,
         ]);
     }
 }
